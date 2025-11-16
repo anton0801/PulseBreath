@@ -24,9 +24,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		957E70BE2EBCE66900623409 /* Pulse Breath.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Pulse Breath.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		957E70CB2EBCE66B00623409 /* Pulse BreathTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Pulse BreathTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		957E70D52EBCE66B00623409 /* Pulse BreathUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Pulse BreathUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		957E70BE2EBCE66900623409 /* PulseBreath.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PulseBreath.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		957E70CB2EBCE66B00623409 /* PulseBreathTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PulseBreathTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		957E70D52EBCE66B00623409 /* PulseBreathUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PulseBreathUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -43,6 +43,11 @@
 		957E70D82EBCE66B00623409 /* Pulse BreathUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "Pulse BreathUITests";
+			sourceTree = "<group>";
+		};
+		957E70E82EBCE67300623409 /* Main */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Main;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +80,7 @@
 		957E70B52EBCE66900623409 = {
 			isa = PBXGroup;
 			children = (
+				957E70E82EBCE67300623409 /* Main */,
 				957E70C02EBCE66900623409 /* Pulse Breath */,
 				957E70CE2EBCE66B00623409 /* Pulse BreathTests */,
 				957E70D82EBCE66B00623409 /* Pulse BreathUITests */,
@@ -85,9 +91,9 @@
 		957E70BF2EBCE66900623409 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				957E70BE2EBCE66900623409 /* Pulse Breath.app */,
-				957E70CB2EBCE66B00623409 /* Pulse BreathTests.xctest */,
-				957E70D52EBCE66B00623409 /* Pulse BreathUITests.xctest */,
+				957E70BE2EBCE66900623409 /* PulseBreath.app */,
+				957E70CB2EBCE66B00623409 /* PulseBreathTests.xctest */,
+				957E70D52EBCE66B00623409 /* PulseBreathUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,9 +101,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		957E70BD2EBCE66900623409 /* Pulse Breath */ = {
+		957E70BD2EBCE66900623409 /* PulseBreath */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 957E70DF2EBCE66B00623409 /* Build configuration list for PBXNativeTarget "Pulse Breath" */;
+			buildConfigurationList = 957E70DF2EBCE66B00623409 /* Build configuration list for PBXNativeTarget "PulseBreath" */;
 			buildPhases = (
 				957E70BA2EBCE66900623409 /* Sources */,
 				957E70BB2EBCE66900623409 /* Frameworks */,
@@ -109,17 +115,18 @@
 			);
 			fileSystemSynchronizedGroups = (
 				957E70C02EBCE66900623409 /* Pulse Breath */,
+				957E70E82EBCE67300623409 /* Main */,
 			);
-			name = "Pulse Breath";
+			name = PulseBreath;
 			packageProductDependencies = (
 			);
 			productName = "Pulse Breath";
-			productReference = 957E70BE2EBCE66900623409 /* Pulse Breath.app */;
+			productReference = 957E70BE2EBCE66900623409 /* PulseBreath.app */;
 			productType = "com.apple.product-type.application";
 		};
-		957E70CA2EBCE66B00623409 /* Pulse BreathTests */ = {
+		957E70CA2EBCE66B00623409 /* PulseBreathTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 957E70E22EBCE66B00623409 /* Build configuration list for PBXNativeTarget "Pulse BreathTests" */;
+			buildConfigurationList = 957E70E22EBCE66B00623409 /* Build configuration list for PBXNativeTarget "PulseBreathTests" */;
 			buildPhases = (
 				957E70C72EBCE66B00623409 /* Sources */,
 				957E70C82EBCE66B00623409 /* Frameworks */,
@@ -133,16 +140,16 @@
 			fileSystemSynchronizedGroups = (
 				957E70CE2EBCE66B00623409 /* Pulse BreathTests */,
 			);
-			name = "Pulse BreathTests";
+			name = PulseBreathTests;
 			packageProductDependencies = (
 			);
 			productName = "Pulse BreathTests";
-			productReference = 957E70CB2EBCE66B00623409 /* Pulse BreathTests.xctest */;
+			productReference = 957E70CB2EBCE66B00623409 /* PulseBreathTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		957E70D42EBCE66B00623409 /* Pulse BreathUITests */ = {
+		957E70D42EBCE66B00623409 /* PulseBreathUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 957E70E52EBCE66B00623409 /* Build configuration list for PBXNativeTarget "Pulse BreathUITests" */;
+			buildConfigurationList = 957E70E52EBCE66B00623409 /* Build configuration list for PBXNativeTarget "PulseBreathUITests" */;
 			buildPhases = (
 				957E70D12EBCE66B00623409 /* Sources */,
 				957E70D22EBCE66B00623409 /* Frameworks */,
@@ -156,11 +163,11 @@
 			fileSystemSynchronizedGroups = (
 				957E70D82EBCE66B00623409 /* Pulse BreathUITests */,
 			);
-			name = "Pulse BreathUITests";
+			name = PulseBreathUITests;
 			packageProductDependencies = (
 			);
 			productName = "Pulse BreathUITests";
-			productReference = 957E70D52EBCE66B00623409 /* Pulse BreathUITests.xctest */;
+			productReference = 957E70D52EBCE66B00623409 /* PulseBreathUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -186,7 +193,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 957E70B92EBCE66900623409 /* Build configuration list for PBXProject "Pulse Breath" */;
+			buildConfigurationList = 957E70B92EBCE66900623409 /* Build configuration list for PBXProject "PulseBreath" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -200,9 +207,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				957E70BD2EBCE66900623409 /* Pulse Breath */,
-				957E70CA2EBCE66B00623409 /* Pulse BreathTests */,
-				957E70D42EBCE66B00623409 /* Pulse BreathUITests */,
+				957E70BD2EBCE66900623409 /* PulseBreath */,
+				957E70CA2EBCE66B00623409 /* PulseBreathTests */,
+				957E70D42EBCE66B00623409 /* PulseBreathUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -258,12 +265,12 @@
 /* Begin PBXTargetDependency section */
 		957E70CD2EBCE66B00623409 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 957E70BD2EBCE66900623409 /* Pulse Breath */;
+			target = 957E70BD2EBCE66900623409 /* PulseBreath */;
 			targetProxy = 957E70CC2EBCE66B00623409 /* PBXContainerItemProxy */;
 		};
 		957E70D72EBCE66B00623409 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 957E70BD2EBCE66900623409 /* Pulse Breath */;
+			target = 957E70BD2EBCE66900623409 /* PulseBreath */;
 			targetProxy = 957E70D62EBCE66B00623409 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -405,20 +412,25 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Pulse-Breath";
+				PRODUCT_BUNDLE_IDENTIFIER = com.pulsebreathapp.PulseBreath;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -437,20 +449,25 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Pulse-Breath";
+				PRODUCT_BUNDLE_IDENTIFIER = com.pulsebreathapp.PulseBreath;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -472,7 +489,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Pulse Breath.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Pulse Breath";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PulseBreath.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PulseBreath";
 			};
 			name = Debug;
 		};
@@ -494,7 +511,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Pulse Breath.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Pulse Breath";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PulseBreath.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PulseBreath";
 			};
 			name = Release;
 		};
@@ -541,7 +558,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		957E70B92EBCE66900623409 /* Build configuration list for PBXProject "Pulse Breath" */ = {
+		957E70B92EBCE66900623409 /* Build configuration list for PBXProject "PulseBreath" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				957E70DD2EBCE66B00623409 /* Debug */,
@@ -550,7 +567,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		957E70DF2EBCE66B00623409 /* Build configuration list for PBXNativeTarget "Pulse Breath" */ = {
+		957E70DF2EBCE66B00623409 /* Build configuration list for PBXNativeTarget "PulseBreath" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				957E70E02EBCE66B00623409 /* Debug */,
@@ -559,7 +576,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		957E70E22EBCE66B00623409 /* Build configuration list for PBXNativeTarget "Pulse BreathTests" */ = {
+		957E70E22EBCE66B00623409 /* Build configuration list for PBXNativeTarget "PulseBreathTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				957E70E32EBCE66B00623409 /* Debug */,
@@ -568,7 +585,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		957E70E52EBCE66B00623409 /* Build configuration list for PBXNativeTarget "Pulse BreathUITests" */ = {
+		957E70E52EBCE66B00623409 /* Build configuration list for PBXNativeTarget "PulseBreathUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				957E70E62EBCE66B00623409 /* Debug */,

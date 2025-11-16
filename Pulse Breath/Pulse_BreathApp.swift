@@ -1,17 +1,15 @@
-//
-//  Pulse_BreathApp.swift
-//  Pulse Breath
-//
-//  Created by Stepan Yarikova on 6/11/25.
-//
 
 import SwiftUI
 
 @main
-struct Pulse_BreathApp: App {
+struct PulseBreathApp: App {
+    @StateObject var appState = AppState()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainContentView()
+                .environmentObject(appState)
+                .preferredColorScheme(.dark) // Dark theme by default
         }
     }
 }
