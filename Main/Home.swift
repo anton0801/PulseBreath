@@ -33,6 +33,11 @@ class AppState: ObservableObject {
             saveData()
         }
     }
+    @Published var disclaimerShowed = UserDefaults.standard.bool(forKey: "disclaimer_showed") {
+        didSet {
+            UserDefaults.standard.set(disclaimerShowed, forKey: "disclaimer_showed")
+        }
+    }
   
     // Audio Player
     var audioPlayer: AVAudioPlayer?
@@ -456,24 +461,142 @@ struct MainContentView: View {
     @EnvironmentObject var appState: AppState
   
     var body: some View {
-        TabView {
-            HomeView()
-                .tabItem {
-                    Label("Home", systemImage: "house")
-                }
-          
-            ProgramsView()
-                .tabItem {
-                    Label("Programs", systemImage: "book")
-                }
-          
-            StatsView()
-                .tabItem {
-                    Label("Stats", systemImage: "chart.bar")
-                }
+        if appState.disclaimerShowed {
+            TabView {
+                HomeView()
+                    .tabItem {
+                        Label("Home", systemImage: "house")
+                    }
+              
+                ProgramsView()
+                    .tabItem {
+                        Label("Programs", systemImage: "book")
+                    }
+              
+                StatsView()
+                    .tabItem {
+                        Label("Stats", systemImage: "chart.bar")
+                    }
+            }
+            .font(.system(.body, design: .rounded)) // SF Pro approximation
+            .accentColor(.blue)
+        } else {
+            MedicalDisclaimerView()
+                .environmentObject(appState)
         }
-        .font(.system(.body, design: .rounded)) // SF Pro approximation
-        .accentColor(.blue)
+    }
+}
+
+struct MedicalDisclaimerView: View {
+    
+    @EnvironmentObject var appState: AppState
+    
+    private let disclaimerText = """
+Pulse Breath is designed for relaxation, stress reduction, focus improvement, and general wellness purposes only.
+
+It is not a medical device and is not intended to diagnose, treat, cure, or prevent any disease or health condition.
+
+The breathing techniques included are publicly available practices popularized by various experts and researchers. They are provided for educational and wellness purposes.
+
+Always consult a qualified healthcare professional before beginning any breathing exercises, especially if you have:
+• Respiratory conditions (asthma, COPD, etc.)
+• Cardiovascular conditions
+• Anxiety or panic disorders
+• High or low blood pressure
+• Are pregnant
+• Any other medical condition
+
+Stop immediately if you experience dizziness, lightheadedness, discomfort, or any unusual symptoms.
+
+Never perform guided breathing exercises while driving, operating heavy machinery, swimming, or in any situation where altered breathing could pose a risk.
+
+Sources & References:
+• 4-7-8 Breathing – Dr. Andrew Weil
+  drweil.com
+• Box Breathing – Used by U.S. Navy SEALs, Mark Divine
+• Coherent Breathing (5.5 sec) – HeartMath Institute research
+• General techniques are based on publicly available pranayama and mindfulness practices
+"""
+
+    var body: some View {
+        ZStack {
+            appBackground
+                .ignoresSafeArea()
+            
+            ScrollView {
+                VStack(alignment: .leading, spacing: 28) {
+                    // Header
+                    HStack {
+                        Image(systemName: "heart.circle.fill")
+                            .font(.system(size: 44))
+                            .foregroundColor(.pink.opacity(0.9))
+                            .shadow(color: .pink.opacity(0.4), radius: 10)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Pulse Breath")
+                                .font(.system(size: 26, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                        }
+                        Spacer()
+                    }
+                    
+                    Text("Important Safety Information")
+                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                    
+                    Text("Please read before using")
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.7))
+                    
+                    // Main disclaimer box
+                    Text(disclaimerText)
+                        .font(.system(size: 17, design: .rounded))
+                        .foregroundColor(.white.opacity(0.92))
+                        .lineSpacing(6)
+                        .padding(24)
+                        .background(
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.white.opacity(0.08))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                                )
+                        )
+                        .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+                    
+                    // Final note
+                    HStack {
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundColor(.green.opacity(0.9))
+                        Text("Your safety is our top priority")
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                            .foregroundColor(.green.opacity(0.9))
+                        Spacer()
+                    }
+                    .padding(.top, 8)
+                    
+                    
+                    Button {
+                        appState.disclaimerShowed = true
+                    } label: {
+                        Text("I have read and understood")
+                            .font(.system(size: 19, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.accentColor.opacity(0.95))
+                                    .shadow(color: .accentColor.opacity(0.5), radius: 10)
+                            )
+                    }
+                    
+                }
+                .padding(24)
+            }
+        }
+        .navigationTitle("Safety & Disclaimer")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
