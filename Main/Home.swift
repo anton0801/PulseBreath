@@ -287,6 +287,25 @@ struct BreathingMode: Identifiable, Equatable, Codable {
     static let coherent = BreathingMode(name: "Coherent", description: "5.5-5.5", inhale: 5.5, holdAfterInhale: 0, exhale: 5.5, holdAfterExhale: 0, color: Color(hex: "#A020F0"))
   
     static var predefined: [BreathingMode] = [.sleep, .focus, .relax, .energy, .box, .coherent]
+    
+    var sourceInfo: (title: String, url: String)? {
+        switch self {
+        case .sleep: // 4-7-8
+            return ("Dr. Andrew Weil's 4-7-8 Technique", "https://www.drweil.com/videos-features/videos/breathing-exercises-4-7-8-breath/")
+        case .focus: // 3-3-3-3 (balanced breathing for focus)
+            return ("Harvard Health: Equal Breathing for Concentration", "https://www.health.harvard.edu/mind-and-mood/relaxation-techniques-breath-control-helps-quell-errant-stress-response")
+        case .relax: // 5-5
+            return ("Mayo Clinic: Diaphragmatic Breathing", "https://www.mayoclinic.org/healthy-lifestyle/stress-management/in-depth/relaxation-technique/art-20045368")
+        case .energy: // 2-0-4-0 (quick energizing breath)
+            return ("American Lung Association: Pursed Lip Breathing for Energy", "https://www.lung.org/lung-health-diseases/wellness/breathing-exercises")
+        case .box: // 4-4-4-4
+            return ("Navy SEALs Box Breathing, via Mark Divine", "https://unbeatablemind.com/box-breathing/")
+        case .coherent: // 5.5-5.5
+            return ("HeartMath Institute: Coherent Breathing Research", "https://www.heartmath.org/research/science-of-the-heart/heart-rate-variability/")
+        default:
+            return nil
+        }
+    }
 }
 
 extension Color {
@@ -801,6 +820,17 @@ struct EnhancedModeCard: View {
             .background(mode.color.opacity(0.8))
             .foregroundColor(.white)
             .cornerRadius(8)
+            
+            if let source = mode.sourceInfo {
+                HStack {
+                    Image(systemName: "doc.text")
+                        .foregroundColor(.white.opacity(0.7))
+                    Link(source.title, destination: URL(string: source.url)!)
+                        .font(.caption)
+                        .foregroundColor(mode.color)
+                }
+                .padding(.top, 4)
+            }
         }
         .padding()
         .frame(minHeight: 150)
@@ -947,6 +977,16 @@ struct ProgramCard: View {
             Text("Mode: \(program.mode.name)")
                 .font(.subheadline)
                 .foregroundColor(program.mode.color)
+            if let source = program.mode.sourceInfo {
+                Text("Source: \(source.title)")
+                    .font(.caption)
+                    .foregroundColor(.blue)
+                    .onTapGesture {
+                        if let url = URL(string: source.url) {
+                            UIApplication.shared.open(url)
+                        }
+                    }
+            }
           
             if showDetails {
                 ForEach(1...program.days, id: \.self) { day in
