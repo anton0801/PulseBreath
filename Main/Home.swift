@@ -1654,20 +1654,18 @@ struct PulseBreathEntry: View {
     @EnvironmentObject var appState: AppState
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                if conductor.flowState == .inhaling || conductor.showBreathPermission {
-                    BreathLoadingView()
-                }
-                
-                if conductor.showBreathPermission {
-                    BreathPermissionOverlay(
-                        onAccept: conductor.acceptBreathAwareness,
-                        onDecline: conductor.declineBreathAwareness
-                    )
-                } else {
-                    activeFlow
-                }
+        ZStack {
+            if conductor.flowState == .inhaling || conductor.showBreathPermission {
+                BreathLoadingView()
+            }
+            
+            if conductor.showBreathPermission {
+                BreathPermissionOverlay(
+                    onAccept: conductor.acceptBreathAwareness,
+                    onDecline: conductor.declineBreathAwareness
+                )
+            } else {
+                activeFlow
             }
         }
     }
