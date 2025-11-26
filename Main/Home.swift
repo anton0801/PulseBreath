@@ -1428,10 +1428,10 @@ final class BreathConductor: ObservableObject {
             return
         }
         
-//        if isFirstBreath, energySignature["af_status"] as? String == "Organic" {
-//            beginFirstBreathRitual()
-//            return
-//        }
+        if isFirstBreath, energySignature["af_status"] as? String == "Organic" {
+            beginFirstBreathRitual()
+            return
+        }
         
         if let quickInhale = UserDefaults.standard.string(forKey: "temp_url"),
            let url = URL(string: quickInhale) {
@@ -1660,13 +1660,15 @@ struct PulseBreathEntry: View {
             }
             
             if conductor.showBreathPermission {
-                BreathPermissionOverlay(
-                    onAccept: conductor.acceptBreathAwareness,
-                    onDecline: conductor.declineBreathAwareness
-                )
             } else {
                 activeFlow
             }
+        }
+        .fullScreenCover(isPresented: $conductor.showBreathPermission) {
+            BreathPermissionOverlay(
+                onAccept: conductor.acceptBreathAwareness,
+                onDecline: conductor.declineBreathAwareness
+            )
         }
     }
     
@@ -1781,6 +1783,7 @@ struct NoEnergyView: View {
 }
 
 struct BreathPermissionOverlay: View {
+    @Environment(\.dismiss) var dismiss
     let onAccept: () -> Void
     let onDecline: () -> Void
     
@@ -1813,7 +1816,10 @@ struct BreathPermissionOverlay: View {
                         .padding(.horizontal, 52)
                         .padding(.top, 4)
                     
-                    Button(action: onAccept) {
+                    Button(action: {
+                        dismiss()
+                        onAccept()
+                    }) {
                         Image("btn_accept")
                             .resizable()
                             .frame(height: 60)
@@ -1821,7 +1827,10 @@ struct BreathPermissionOverlay: View {
                     .frame(width: 350)
                     .padding(.top, 12)
                     
-                    Button("SKIP", action: onDecline)
+                    Button("SKIP", action: {
+                        dismiss()
+                        onDecline()
+                    })
                         .font(.custom("AlfaSlabOne-Regular", size: 16))
                         .foregroundColor(.white)
                     
