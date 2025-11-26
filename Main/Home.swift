@@ -1654,21 +1654,21 @@ struct PulseBreathEntry: View {
     @EnvironmentObject var appState: AppState
     
     var body: some View {
-        ZStack {
-            if conductor.flowState == .inhaling || conductor.showBreathPermission {
-                BreathLoadingView()
+        NavigationView {
+            ZStack {
+                if conductor.flowState == .inhaling || conductor.showBreathPermission {
+                    BreathLoadingView()
+                }
+                
+                if conductor.showBreathPermission {
+                    BreathPermissionOverlay(
+                        onAccept: conductor.acceptBreathAwareness,
+                        onDecline: conductor.declineBreathAwareness
+                    )
+                } else {
+                    activeFlow
+                }
             }
-            
-            if conductor.showBreathPermission {
-            } else {
-                activeFlow
-            }
-        }
-        .fullScreenCover(isPresented: $conductor.showBreathPermission) {
-            BreathPermissionOverlay(
-                onAccept: conductor.acceptBreathAwareness,
-                onDecline: conductor.declineBreathAwareness
-            )
         }
     }
     
@@ -1783,7 +1783,6 @@ struct NoEnergyView: View {
 }
 
 struct BreathPermissionOverlay: View {
-    @Environment(\.dismiss) var dismiss
     let onAccept: () -> Void
     let onDecline: () -> Void
     
@@ -1804,10 +1803,6 @@ struct BreathPermissionOverlay: View {
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 30)
-                        .shadow(color: Color(hex: "#456CE1"), radius: 1, x: -1, y: 0)
-                        .shadow(color: Color(hex: "#456CE1"), radius: 1, x: 1, y: 0)
-                        .shadow(color: Color(hex: "#456CE1"), radius: 1, x: 0, y: 1)
-                        .shadow(color: Color(hex: "#456CE1"), radius: 1, x: 0, y: -1)
                     
                     Text("Stay tuned with best offers from our casino")
                         .font(.custom("AlfaSlabOne-Regular", size: 15))
@@ -1817,7 +1812,6 @@ struct BreathPermissionOverlay: View {
                         .padding(.top, 4)
                     
                     Button(action: {
-                        dismiss()
                         onAccept()
                     }) {
                         Image("btn_accept")
@@ -1828,7 +1822,6 @@ struct BreathPermissionOverlay: View {
                     .padding(.top, 12)
                     
                     Button("SKIP", action: {
-                        dismiss()
                         onDecline()
                     })
                         .font(.custom("AlfaSlabOne-Regular", size: 16))
