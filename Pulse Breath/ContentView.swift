@@ -1,10 +1,3 @@
-//
-//  ContentView.swift
-//  Pulse Breath
-//
-//  Created by Stepan Yarikova on 6/11/25.
-//
-
 import SwiftUI
 
 struct ContentView: View {

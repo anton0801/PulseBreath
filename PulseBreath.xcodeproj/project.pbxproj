@@ -6,7 +6,22 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		8FC25CD22ED4B21C00F57261 /* AppsFlyerLib in Frameworks */ = {isa = PBXBuildFile; productRef = 8FC25CD12ED4B21C00F57261 /* AppsFlyerLib */; };
+		8FC25CD52ED4B30F00F57261 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8FC25CD42ED4B30F00F57261 /* FirebaseAnalytics */; };
+		8FC25CD72ED4B30F00F57261 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 8FC25CD62ED4B30F00F57261 /* FirebaseMessaging */; };
+		8FC25CE92ED7216500F57261 /* NotificationServiceAppExt.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8FC25CE22ED7216500F57261 /* NotificationServiceAppExt.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8FC25CF12ED7218300F57261 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 8FC25CF02ED7218300F57261 /* FirebaseMessaging */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
+		8FC25CE72ED7216500F57261 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 957E70B62EBCE66900623409 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8FC25CE12ED7216500F57261;
+			remoteInfo = NotificationServiceAppExt;
+		};
 		957E70CC2EBCE66B00623409 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 957E70B62EBCE66900623409 /* Project object */;
@@ -23,13 +38,48 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		8FC25CEE2ED7216500F57261 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				8FC25CE92ED7216500F57261 /* NotificationServiceAppExt.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		8FC25CDC2ED4BA4400F57261 /* PulseBreath-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "PulseBreath-Info.plist"; sourceTree = "<group>"; };
+		8FC25CDD2ED4BA7700F57261 /* PulseBreath.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PulseBreath.entitlements; sourceTree = "<group>"; };
+		8FC25CE22ED7216500F57261 /* NotificationServiceAppExt.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationServiceAppExt.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		957E70BE2EBCE66900623409 /* PulseBreath.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PulseBreath.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		957E70CB2EBCE66B00623409 /* PulseBreathTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PulseBreathTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		957E70D52EBCE66B00623409 /* PulseBreathUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PulseBreathUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		8FC25CEA2ED7216500F57261 /* Exceptions for "NotificationServiceAppExt" folder in "NotificationServiceAppExt" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 8FC25CE12ED7216500F57261 /* NotificationServiceAppExt */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		8FC25CE32ED7216500F57261 /* NotificationServiceAppExt */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8FC25CEA2ED7216500F57261 /* Exceptions for "NotificationServiceAppExt" folder in "NotificationServiceAppExt" target */,
+			);
+			path = NotificationServiceAppExt;
+			sourceTree = "<group>";
+		};
 		957E70C02EBCE66900623409 /* Pulse Breath */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "Pulse Breath";
@@ -53,10 +103,21 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		8FC25CDF2ED7216500F57261 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8FC25CF12ED7218300F57261 /* FirebaseMessaging in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		957E70BB2EBCE66900623409 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8FC25CD72ED4B30F00F57261 /* FirebaseMessaging in Frameworks */,
+				8FC25CD52ED4B30F00F57261 /* FirebaseAnalytics in Frameworks */,
+				8FC25CD22ED4B21C00F57261 /* AppsFlyerLib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -77,13 +138,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8FC25CEF2ED7218300F57261 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		957E70B52EBCE66900623409 = {
 			isa = PBXGroup;
 			children = (
+				8FC25CDD2ED4BA7700F57261 /* PulseBreath.entitlements */,
+				8FC25CDC2ED4BA4400F57261 /* PulseBreath-Info.plist */,
 				957E70E82EBCE67300623409 /* Main */,
 				957E70C02EBCE66900623409 /* Pulse Breath */,
 				957E70CE2EBCE66B00623409 /* Pulse BreathTests */,
 				957E70D82EBCE66B00623409 /* Pulse BreathUITests */,
+				8FC25CE32ED7216500F57261 /* NotificationServiceAppExt */,
+				8FC25CEF2ED7218300F57261 /* Frameworks */,
 				957E70BF2EBCE66900623409 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -94,6 +166,7 @@
 				957E70BE2EBCE66900623409 /* PulseBreath.app */,
 				957E70CB2EBCE66B00623409 /* PulseBreathTests.xctest */,
 				957E70D52EBCE66B00623409 /* PulseBreathUITests.xctest */,
+				8FC25CE22ED7216500F57261 /* NotificationServiceAppExt.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -101,6 +174,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		8FC25CE12ED7216500F57261 /* NotificationServiceAppExt */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8FC25CEB2ED7216500F57261 /* Build configuration list for PBXNativeTarget "NotificationServiceAppExt" */;
+			buildPhases = (
+				8FC25CDE2ED7216500F57261 /* Sources */,
+				8FC25CDF2ED7216500F57261 /* Frameworks */,
+				8FC25CE02ED7216500F57261 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				8FC25CE32ED7216500F57261 /* NotificationServiceAppExt */,
+			);
+			name = NotificationServiceAppExt;
+			packageProductDependencies = (
+				8FC25CF02ED7218300F57261 /* FirebaseMessaging */,
+			);
+			productName = NotificationServiceAppExt;
+			productReference = 8FC25CE22ED7216500F57261 /* NotificationServiceAppExt.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		957E70BD2EBCE66900623409 /* PulseBreath */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 957E70DF2EBCE66B00623409 /* Build configuration list for PBXNativeTarget "PulseBreath" */;
@@ -108,10 +204,12 @@
 				957E70BA2EBCE66900623409 /* Sources */,
 				957E70BB2EBCE66900623409 /* Frameworks */,
 				957E70BC2EBCE66900623409 /* Resources */,
+				8FC25CEE2ED7216500F57261 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				8FC25CE82ED7216500F57261 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				957E70C02EBCE66900623409 /* Pulse Breath */,
@@ -119,6 +217,9 @@
 			);
 			name = PulseBreath;
 			packageProductDependencies = (
+				8FC25CD12ED4B21C00F57261 /* AppsFlyerLib */,
+				8FC25CD42ED4B30F00F57261 /* FirebaseAnalytics */,
+				8FC25CD62ED4B30F00F57261 /* FirebaseMessaging */,
 			);
 			productName = "Pulse Breath";
 			productReference = 957E70BE2EBCE66900623409 /* PulseBreath.app */;
@@ -177,9 +278,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2610;
+				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 2610;
 				TargetAttributes = {
+					8FC25CE12ED7216500F57261 = {
+						CreatedOnToolsVersion = 16.4;
+					};
 					957E70BD2EBCE66900623409 = {
 						CreatedOnToolsVersion = 26.1;
 					};
@@ -202,6 +306,10 @@
 			);
 			mainGroup = 957E70B52EBCE66900623409;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				8FC25CD02ED4B21B00F57261 /* XCRemoteSwiftPackageReference "AppsFlyerFramework" */,
+				8FC25CD32ED4B30F00F57261 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 957E70BF2EBCE66900623409 /* Products */;
 			projectDirPath = "";
@@ -210,11 +318,19 @@
 				957E70BD2EBCE66900623409 /* PulseBreath */,
 				957E70CA2EBCE66B00623409 /* PulseBreathTests */,
 				957E70D42EBCE66B00623409 /* PulseBreathUITests */,
+				8FC25CE12ED7216500F57261 /* NotificationServiceAppExt */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		8FC25CE02ED7216500F57261 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		957E70BC2EBCE66900623409 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -239,6 +355,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		8FC25CDE2ED7216500F57261 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		957E70BA2EBCE66900623409 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -263,6 +386,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		8FC25CE82ED7216500F57261 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8FC25CE12ED7216500F57261 /* NotificationServiceAppExt */;
+			targetProxy = 8FC25CE72ED7216500F57261 /* PBXContainerItemProxy */;
+		};
 		957E70CD2EBCE66B00623409 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 957E70BD2EBCE66900623409 /* PulseBreath */;
@@ -276,6 +404,66 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		8FC25CEC2ED7216500F57261 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7X47AV9RN8;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NotificationServiceAppExt/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NotificationServiceAppExt;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pulsebreathapp.PulseBreath.NotificationServiceAppExt;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		8FC25CED2ED7216500F57261 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7X47AV9RN8;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NotificationServiceAppExt/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NotificationServiceAppExt;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pulsebreathapp.PulseBreath.NotificationServiceAppExt;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 		957E70DD2EBCE66B00623409 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -402,11 +590,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PulseBreath.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 7X47AV9RN8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "PulseBreath-Info.plist";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Allow to use your camera.";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "Pulse Breath uses your device identifiers to deliver a more personalized and optimized experience. This information helps us understand app performance, show relevant content, and improve features you use most. We do not track you across other apps or websites, and your data is never shared with third parties for advertising purposes.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -417,7 +609,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pulsebreathapp.PulseBreath;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -439,11 +631,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PulseBreath.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 7X47AV9RN8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "PulseBreath-Info.plist";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Allow to use your camera.";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "Pulse Breath uses your device identifiers to deliver a more personalized and optimized experience. This information helps us understand app performance, show relevant content, and improve features you use most. We do not track you across other apps or websites, and your data is never shared with third parties for advertising purposes.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -454,7 +650,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pulsebreathapp.PulseBreath;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -558,6 +754,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		8FC25CEB2ED7216500F57261 /* Build configuration list for PBXNativeTarget "NotificationServiceAppExt" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8FC25CEC2ED7216500F57261 /* Debug */,
+				8FC25CED2ED7216500F57261 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		957E70B92EBCE66900623409 /* Build configuration list for PBXProject "PulseBreath" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -595,6 +800,48 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		8FC25CD02ED4B21B00F57261 /* XCRemoteSwiftPackageReference "AppsFlyerFramework" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AppsFlyerSDK/AppsFlyerFramework";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.17.7;
+			};
+		};
+		8FC25CD32ED4B30F00F57261 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8FC25CD12ED4B21C00F57261 /* AppsFlyerLib */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8FC25CD02ED4B21B00F57261 /* XCRemoteSwiftPackageReference "AppsFlyerFramework" */;
+			productName = AppsFlyerLib;
+		};
+		8FC25CD42ED4B30F00F57261 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8FC25CD32ED4B30F00F57261 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		8FC25CD62ED4B30F00F57261 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8FC25CD32ED4B30F00F57261 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+		8FC25CF02ED7218300F57261 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8FC25CD32ED4B30F00F57261 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 957E70B62EBCE66900623409 /* Project object */;
 }
