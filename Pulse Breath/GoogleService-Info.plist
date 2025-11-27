@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyB2jeMzE1AxOm4k3L7Z16w3HWR4flg4PJc</string>
+	<string>AIzaSyAzJFKwdDSqO6Jj19YOSH4ERiBPenKBjDs</string>
 	<key>GCM_SENDER_ID</key>
-	<string>200426188862</string>
+	<string>687121909438</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.pulsebreathapp.PulseBreath</string>
 	<key>PROJECT_ID</key>
-	<string>pulsebreath-b42de</string>
+	<string>pulsebreathapp</string>
 	<key>STORAGE_BUCKET</key>
-	<string>pulsebreath-b42de.firebasestorage.app</string>
+	<string>pulsebreathapp.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:200426188862:ios:28a63e1c3bc0936499216f</string>
+	<string>1:687121909438:ios:520d22fd38d873fe50c0ef</string>
 </dict>
 </plist>
