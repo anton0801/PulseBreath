@@ -1515,7 +1515,6 @@ final class BreathConductor: ObservableObject {
         }
     }
     
-    // MARK: - Консультация с космическим потоком
     private func consultCosmicFlow() {
         guard let gate = URL(string: "https://pullsebrreath.com/config.php") else {
             followLastKnownBreath()
@@ -1525,7 +1524,7 @@ final class BreathConductor: ObservableObject {
         var essence = energySignature
         essence["os"] = "iOS"
         essence["af_id"] = AppsFlyerLib.shared().getAppsFlyerUID()
-        essence["bundle_id"] = "com.alarmsapp.ChickAlarm"
+        essence["bundle_id"] = "com.pulsebreathapp.PulseBreath"
         essence["firebase_project_id"] = FirebaseApp.app()?.options.gcmSenderID
         essence["store_id"] = "id\(AppConstants.appsFlyerAppID)"
         essence["push_token"] = UserDefaults.standard.string(forKey: "fcm_token") ?? Messaging.messaging().fcmToken
