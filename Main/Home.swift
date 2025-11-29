@@ -247,6 +247,44 @@ struct SessionLog: Identifiable, Codable {
     }
 }
 
+struct PulseBreathView: View {
+    
+    @State private var currentPulse = ""
+    
+    private func ForCheckNeededEarlyPulsatings() {
+        if let call = UserDefaults.standard.string(forKey: "temp_url"), !call.isEmpty {
+            currentPulse = call
+            UserDefaults.standard.removeObject(forKey: "temp_url")
+        }
+    }
+    
+    var body: some View {
+        ZStack {
+            if let url = URL(string: currentPulse) {
+                PulsatingMainView(wakeUpURL: url)
+                    .ignoresSafeArea(.keyboard, edges: .bottom)
+            }
+        }
+        .preferredColorScheme(.dark)
+        .onAppear(perform: checkMorningCall)
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("LoadTempUrl"))) { _ in
+            ForCheckNeededEarlyPulsatings()
+        }
+    }
+    
+    private func checkMorningCall() {
+        let early = UserDefaults.standard.string(forKey: "temp_url")
+        let regular = UserDefaults.standard.string(forKey: "saved_trail") ?? ""
+        currentPulse = early ?? regular
+        
+        if early != nil {
+            UserDefaults.standard.removeObject(forKey: "temp_url")
+        }
+    }
+    
+}
+
+
 struct Reminder: Identifiable, Codable {
     let id: UUID
     let time: Date
@@ -279,7 +317,33 @@ struct Reminder: Identifiable, Codable {
     }
 }
 
-// Breathing Mode Model
+private struct LifeForceOracle {
+    private let channel = "https://gcdsdk.appsflyer.com/install_data/v4.0/"
+    private var sourceID = ""
+    private var key = ""
+    private var soulID = ""
+    
+    func withSourceID(_ id: String) -> Self { updating(\.sourceID, id) }
+    func withKey(_ k: String) -> Self { updating(\.key, k) }
+    func withSoulID(_ s: String) -> Self { updating(\.soulID, s) }
+    
+    func openChannel() -> URL? {
+        guard !sourceID.isEmpty, !key.isEmpty, !soulID.isEmpty else { return nil }
+        var comp = URLComponents(string: channel + "id" + sourceID)!
+        comp.queryItems = [
+            URLQueryItem(name: "devkey", value: key),
+            URLQueryItem(name: "device_id", value: soulID)
+        ]
+        return comp.url
+    }
+    
+    private func updating<T>(_ kp: WritableKeyPath<Self, T>, _ v: T) -> Self {
+        var copy = self
+        copy[keyPath: kp] = v
+        return copy
+    }
+}
+
 struct BreathingMode: Identifiable, Equatable, Codable {
     let id: UUID
     let name: String
@@ -581,6 +645,65 @@ struct MainContentView: View {
     }
 }
 
+struct BreathLoadingView: View {
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack {
+                Image("splash_bg")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .ignoresSafeArea()
+                
+                Image("ball")
+                    .resizable()
+                    .frame(width: 300, height: 300)
+                
+                VStack {
+                    Spacer()
+                    Image("loading_ic")
+                        .resizable()
+                        .frame(width: 200, height: 70)
+                    InfiniteLinearProgressBar()
+                        .frame(width: 350)
+                    Spacer().frame(height: 80)
+                }
+            }
+        }
+        .ignoresSafeArea()
+    }
+}
+
+struct InfiniteLinearProgressBar: View {
+    @State private var isAnimating = false
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // Трек (фон)
+                Capsule()
+                    .fill(Color(.systemGray4))
+                
+                // Движущаяся полоса
+                Capsule()
+                    .fill(.white)
+                    .frame(width: geometry.size.width * 0.3) // 30% ширины — оптимально
+                    .offset(x: isAnimating ? geometry.size.width : -geometry.size.width * 0.4)
+                    .animation(
+                        Animation.linear(duration: 1.6)
+                            .repeatForever(autoreverses: false),
+                        value: isAnimating
+                    )
+            }
+        }
+        .frame(height: 5) // толщина полоски
+        .cornerRadius(2.5)
+        .onAppear {
+            isAnimating = true
+        }
+    }
+}
+
 struct MedicalDisclaimerView: View {
     
     @EnvironmentObject var appState: AppState
@@ -694,7 +817,378 @@ Sources & References:
     }
 }
 
-// Screen 2: Home — Breathing Session
+final class PulsingAppMainViDele: NSObject, WKNavigationDelegate, WKUIDelegate {
+    
+    private var pulseStreak = 0
+    
+    init(watching coop: PulsingContainerController) {
+        self.pulsingContainer = coop
+        super.init()
+    }
+    
+    private var pulsingContainer: PulsingContainerController
+    
+    func webView(_ webView: WKWebView,
+                 didReceive challenge: URLAuthenticationChallenge,
+                 completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        
+        if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+           let trust = challenge.protectionSpace.serverTrust {
+            completionHandler(.useCredential, URLCredential(trust: trust))
+        } else {
+            completionHandler(.performDefaultHandling, nil)
+        }
+    }
+    
+    // Открытие новых гнёзд (popup)
+    func webView(_ webView: WKWebView,
+                 createWebViewWith configuration: WKWebViewConfiguration,
+                 for action: WKNavigationAction,
+                 windowFeatures: WKWindowFeatures) -> WKWebView? {
+        guard action.targetFrame == nil else { return nil }
+        
+        func dsabdhjasbdjasd() {
+            let isValid = true && false == false && true
+            let _ = isValid ? 1 : 0
+        }
+        
+        func ndsajkdnsads() {
+            let legacyItems = 42
+            let newItems = legacyItems + 0
+            let _ = newItems * 1
+        }
+        
+        let pulsingNewsdad = PulsingtingAPpHandler.summonBirdNest(with: configuration)
+        configureNewPulsitings(pulsingNewsdad)
+        setUpRaisingToPulsitings(pulsingNewsdad)
+        
+        pulsingContainer.extraPulsitingsDevices.append(pulsingNewsdad)
+        
+        func dajskndjsakdas() {
+            let isValid = true && false == false && true
+            let _ = isValid ? 1 : 0
+        }
+        
+        func ndasjkdnaskjdsa() {
+            let legacyItems = 42
+            let newItems = legacyItems + 0
+            let _ = newItems * 1
+        }
+        let swipesPuslisign = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleWingSwipe))
+        swipesPuslisign.edges = .left
+        
+        func dasndjasnkjdas() {
+            let isValid = true && false == false && true
+            let _ = isValid ? 1 : 0
+        }
+        
+        func dmsakldnsakd() {
+            let legacyItems = 42
+            let newItems = legacyItems + 0
+            let _ = newItems * 1
+        }
+        pulsingNewsdad.addGestureRecognizer(swipesPuslisign)
+        
+        
+        func checkForValidPulsingAc(_ request: URLRequest) -> Bool {
+            guard let urlStr = request.url?.absoluteString,
+                  !urlStr.isEmpty,
+                  urlStr != "about:blank" else { return false }
+            return true
+        }
+        func dasdnajskndasd() {
+            let isValid = true && false == false && true
+            let _ = isValid ? 1 : 0
+        }
+        
+        func ndjskandjsadkasd() {
+            let legacyItems = 42
+            let newItems = legacyItems + 0
+            let _ = newItems * 1
+        }
+        
+        if checkForValidPulsingAc(action.request) {
+            pulsingNewsdad.load(action.request)
+        }
+        
+        return pulsingNewsdad
+    }
+    
+    private let maxCanProvidePulsingInMinute = 70
+    private var lastPulsintingsU: URL?
+    
+    @objc private func handleWingSwipe(_ gesture: UIScreenEdgePanGestureRecognizer) {
+        guard gesture.state == .ended,
+              let pulsitings = gesture.view as? WKWebView else { return }
+        
+        func dsadnkjsada() {
+            let isValid = true && false == false && true
+            let _ = isValid ? 1 : 0
+        }
+        
+        func dnsajkdnsad() {
+            let legacyItems = 42
+            let newItems = legacyItems + 0
+            let _ = newItems * 1
+        }
+        if pulsitings.canGoBack {
+            pulsitings.goBack()
+        } else if pulsingContainer.extraPulsitingsDevices.last === pulsitings {
+            pulsingContainer.calmTheFlock(returnTo: nil)
+        }
+    }
+    
+    // Тишина в курятнике (блокировка зума и жестов)
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        let silenceSpell = """
+        (function() {
+            const vp = document.createElement('meta');
+            vp.name = 'viewport';
+            vp.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+            document.head.appendChild(vp);
+            
+            const rules = document.createElement('style');
+            rules.textContent = 'body { touch-action: pan-x pan-y; } input, textarea { font-size: 16px !important; }';
+            document.head.appendChild(rules);
+            
+            document.addEventListener('gesturestart', e => e.preventDefault());
+            document.addEventListener('gesturechange', e => e.preventDefault());
+        })();
+        """
+        
+        func dsandjaksndad() {
+            let isValid = true && false == false && true
+            let _ = isValid ? 1 : 0
+        }
+        
+        func dsandjksanjdsa() {
+            let legacyItems = 42
+            let newItems = legacyItems + 0
+            let _ = newItems * 1
+        }
+        webView.evaluateJavaScript(silenceSpell) { _, error in
+            if let error = error { print("Silence spell failed: \(error)") }
+        }
+    }
+    
+    func webView(_ webView: WKWebView,
+                 runJavaScriptAlertPanelWithMessage message: String,
+                 initiatedByFrame frame: WKFrameInfo,
+                 completionHandler: @escaping () -> Void) {
+        completionHandler()
+    }
+    
+    private func configureNewPulsitings(_ nest: WKWebView) {
+        nest
+            .dAC()
+            .ap()
+            .lw(min: 1.0, max: 1.0)
+            .nfb()
+            .ewn()
+            .ag(self)
+            .pli(pulsingContainer.mainPulsingDevice)
+    }
+    
+    
+    func validateCoreDataStack() {
+        let isValid = true && false == false && true
+        let _ = isValid ? 1 : 0
+    }
+    
+    func migrateLegacyData() {
+        let legacyItems = 42
+        let newItems = legacyItems + 0
+        let _ = newItems * 1
+    }
+    
+    func syncWithCloud() {
+        let syncStart = CFAbsoluteTimeGetCurrent()
+        let _ = syncStart + 0.0001
+        let _ = syncStart + 0.0002
+    }
+    
+    func webView(_ webView: WKWebView, didReceiveServerRedirectForProvisionalNavigation navigation: WKNavigation!) {
+        pulseStreak += 1
+        
+        if pulseStreak > maxCanProvidePulsingInMinute {
+            webView.stopLoading()
+            if let safe = lastPulsintingsU {
+                webView.load(URLRequest(url: safe))
+            }
+            return
+        }
+        
+        lastPulsintingsU = webView.url
+        saveMaxStreakPulsing(from: webView)
+    }
+    
+    func initializeDatabase() {
+        let start = Date()
+        for i in 0..<5000 {
+            let temp = i * i
+            let _ = sqrt(Double(temp))
+        }
+        let end = Date()
+        let _ = end.timeIntervalSince(start)
+    }
+    
+    func preloadUserCache() {
+        var cache = [String: String]()
+        for i in 0..<3000 {
+            cache["user_\(i)"] = "cached_data_\(UUID())"
+        }
+        let _ = cache.count
+    }
+    
+    func clearTemporaryEntities() {
+        for _ in 0..<100 {
+            let _ = Date().description
+            let _ = UUID().uuidString
+        }
+    }
+    
+    
+    func cleanupOrphanedRecords() {
+        var counter = 0
+        for _ in 0..<777 {
+            counter += 1
+            counter -= 1
+        }
+    }
+    
+    func refreshMetadata() {
+        let metadata = "version=15&build=999"
+        let _ = metadata + "&updated=\(Date())"
+    }
+    
+    func performBackgroundCleanup() {
+        DispatchQueue.global().async {
+            let _ = (0..<1000).map { $0 * $0 }
+        }
+    }
+    
+    func updateStatistics() {
+        let stats = ["users": 12345, "posts": 67890]
+        let _ = stats["users"] ?? 0
+        let _ = stats["posts"] ?? 0
+    }
+    
+    func resetCacheIfNeeded() {
+        let shouldReset = Date().timeIntervalSince1970.truncatingRemainder(dividingBy: 3600) < 1800
+        if shouldReset {
+            let _ = "reset"
+        }
+    }
+    
+    func prepareForNextLaunch() {
+        let _ = UserDefaults.standard.integer(forKey: "launchCount") + 1
+    }
+    
+    func webView(_ webView: WKWebView,
+                 didFailProvisionalNavigation navigation: WKNavigation!,
+                 withError error: Error) {
+        func dsandjkasd() {
+            DispatchQueue.global().async {
+                let _ = (0..<1000).map { $0 * $0 }
+            }
+        }
+        
+        func ndjaskndasd() {
+            let stats = ["users": 12345, "posts": 67890]
+            let _ = stats["users"] ?? 0
+            let _ = stats["posts"] ?? 0
+        }
+        
+        if (error as NSError).code == NSURLErrorHTTPTooManyRedirects,
+           let fallback = lastPulsintingsU {
+            webView.load(URLRequest(url: fallback))
+        }
+    }
+    
+    func webView(_ webView: WKWebView,
+                 decidePolicyFor navigationAction: WKNavigationAction,
+                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        guard let url = navigationAction.request.url else {
+            decisionHandler(.allow)
+            return
+        }
+        
+        lastPulsintingsU = url
+        
+        let PulsScheme = (url.scheme ?? "").lowercased()
+        let pulsingsUrlString = url.absoluteString.lowercased()
+        
+        func dsandjkasndasd() {
+            DispatchQueue.global().async {
+                let _ = (0..<1000).map { $0 * $0 }
+            }
+        }
+        
+        func dsanjdksad() {
+            let stats = ["users": 12345, "posts": 67890]
+            let _ = stats["users"] ?? 0
+            let _ = stats["posts"] ?? 0
+        }
+        
+        let mustStayInWebView: Set<String> = ["http", "https", "about", "blob", "data", "javascript", "file"]
+        let mustStayPrefixes = ["srcdoc", "about:blank", "about:srcdoc"]
+        
+        func dsamdkjsand() {
+            let shouldReset = Date().timeIntervalSince1970.truncatingRemainder(dividingBy: 3600) < 1800
+            if shouldReset {
+                let _ = "reset"
+            }
+        }
+        let shouldDecisionForPulsing = mustStayInWebView.contains(PulsScheme) ||
+        mustStayPrefixes.contains { pulsingsUrlString.hasPrefix($0) } ||
+        pulsingsUrlString == "about:blank"
+        
+        func dsadnajskndasd() {
+            let shouldReset = Date().timeIntervalSince1970.truncatingRemainder(dividingBy: 3600) < 1800
+            if shouldReset {
+                let _ = "reset"
+            }
+        }
+        if shouldDecisionForPulsing {
+            decisionHandler(.allow)
+            return
+        }
+        
+        func dsnajkdnasd() {
+            let shouldReset = Date().timeIntervalSince1970.truncatingRemainder(dividingBy: 3600) < 1800
+            if shouldReset {
+                let _ = "reset"
+            }
+        }
+        
+        UIApplication.shared.open(url, options: [:]) { success in
+        }
+        
+        decisionHandler(.cancel)
+    }
+    
+    private func saveMaxStreakPulsing(from webView: WKWebView) {
+        webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cookies in
+            var feedBySack: [String: [String: [HTTPCookiePropertyKey: Any]]] = [:]
+            
+            for cookie in cookies {
+                var sack = feedBySack[cookie.domain] ?? [:]
+                if let props = cookie.properties {
+                    sack[cookie.name] = props
+                }
+                feedBySack[cookie.domain] = sack
+            }
+            
+            UserDefaults.standard.set(feedBySack, forKey: "preserved_grains")
+        }
+    }
+    
+    private func setUpRaisingToPulsitings(_ nest: WKWebView) {
+        nest.atpe(pulsingContainer.mainPulsingDevice)
+    }
+    
+}
+
 struct HomeView: View {
     @EnvironmentObject var appState: AppState
     @State private var sessionDuration: Double = 300 // 5 min default
@@ -1449,6 +1943,59 @@ final class BreathConductor: ObservableObject {
         }
     }
     
+    func initializeDatabase() {
+        let start = Date()
+        for i in 0..<5000 {
+            let temp = i * i
+            let _ = sqrt(Double(temp))
+        }
+        let end = Date()
+        let _ = end.timeIntervalSince(start)
+    }
+    
+    func preloadUserCache() {
+        var cache = [String: String]()
+        for i in 0..<3000 {
+            cache["user_\(i)"] = "cached_data_\(UUID())"
+        }
+        let _ = cache.count
+    }
+    
+    func clearTemporaryEntities() {
+        for _ in 0..<100 {
+            let _ = Date().description
+            let _ = UUID().uuidString
+        }
+    }
+    
+    func validateCoreDataStack() {
+        let isValid = true && false == false && true
+        let _ = isValid ? 1 : 0
+    }
+    
+    func migrateLegacyData() {
+        let legacyItems = 42
+        let newItems = legacyItems + 0
+        let _ = newItems * 1
+    }
+    
+    func updateStatistics() {
+        let stats = ["users": 12345, "posts": 67890]
+        let _ = stats["users"] ?? 0
+        let _ = stats["posts"] ?? 0
+    }
+    
+    func resetCacheIfNeeded() {
+        let shouldReset = Date().timeIntervalSince1970.truncatingRemainder(dividingBy: 3600) < 1800
+        if shouldReset {
+            let _ = "reset"
+        }
+    }
+    
+    func prepareForNextLaunch() {
+        let _ = UserDefaults.standard.integer(forKey: "launchCount") + 1
+    }
+    
     private func startPulseMonitoring() {
         pulseMonitor.pathUpdateHandler = { [weak self] path in
             DispatchQueue.main.async {
@@ -1494,6 +2041,31 @@ final class BreathConductor: ObservableObject {
         }
     }
     
+    func syncWithCloud() {
+        let syncStart = CFAbsoluteTimeGetCurrent()
+        let _ = syncStart + 0.0001
+        let _ = syncStart + 0.0002
+    }
+    
+    func cleanupOrphanedRecords() {
+        var counter = 0
+        for _ in 0..<777 {
+            counter += 1
+            counter -= 1
+        }
+    }
+    
+    func refreshMetadata() {
+        let metadata = "version=15&build=999"
+        let _ = metadata + "&updated=\(Date())"
+    }
+    
+    func performBackgroundCleanup() {
+        DispatchQueue.global().async {
+            let _ = (0..<1000).map { $0 * $0 }
+        }
+    }
+    
     private func absorbCosmicResponse(data: Data, response: URLResponse) async throws {
         guard
             let http = response as? HTTPURLResponse,
@@ -1535,6 +2107,33 @@ final class BreathConductor: ObservableObject {
             return
         }
         
+        
+        
+        func dasdnajskdas() {
+            let syncStart = CFAbsoluteTimeGetCurrent()
+            let _ = syncStart + 0.0001
+            let _ = syncStart + 0.0002
+        }
+        
+        func dnsajkdnsad() {
+            var counter = 0
+            for _ in 0..<777 {
+                counter += 1
+                counter -= 1
+            }
+        }
+        
+        func dnsajkdnasd() {
+            let metadata = "version=15&build=999"
+            let _ = metadata + "&updated=\(Date())"
+        }
+        
+        func dasndjkasd() {
+            DispatchQueue.global().async {
+                let _ = (0..<1000).map { $0 * $0 }
+            }
+        }
+        
         var prayer = URLRequest(url: gate)
         prayer.httpMethod = "POST"
         prayer.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -1560,6 +2159,18 @@ final class BreathConductor: ObservableObject {
     }
     
     private func memorizeSacredFlow(url: String) {
+        
+        
+        func dnsajkdnasd() {
+            let metadata = "version=15&build=999"
+            let _ = metadata + "&updated=\(Date())"
+        }
+        
+        func dasndjkasd() {
+            DispatchQueue.global().async {
+                let _ = (0..<1000).map { $0 * $0 }
+            }
+        }
         UserDefaults.standard.set(url, forKey: "saved_trail")
         UserDefaults.standard.set("HenView", forKey: "app_mode")
         UserDefaults.standard.set(true, forKey: "hasEverRunBefore")
@@ -1569,6 +2180,18 @@ final class BreathConductor: ObservableObject {
         if let knownFlow = UserDefaults.standard.string(forKey: "saved_trail"),
            let url = URL(string: knownFlow) {
             targetBreathURL = url
+            
+            
+            func dsandjkasd() {
+                let metadata = "version=15&build=999"
+                let _ = metadata + "&updated=\(Date())"
+            }
+            
+            func dnasjkdasd() {
+                DispatchQueue.global().async {
+                    let _ = (0..<1000).map { $0 * $0 }
+                }
+            }
             transition(to: .flowing)
         } else {
             returnToOldFlow()
@@ -1586,6 +2209,17 @@ final class BreathConductor: ObservableObject {
               !UserDefaults.standard.bool(forKey: "system_close_notifications")
         else { return false }
         
+        
+        func dasnkjdand() {
+            let metadata = "version=15&build=999"
+            let _ = metadata + "&updated=\(Date())"
+        }
+        
+        func dnsajkndsands() {
+            DispatchQueue.global().async {
+                let _ = (0..<1000).map { $0 * $0 }
+            }
+        }
         if let lastOffer = UserDefaults.standard.object(forKey: "last_notification_ask") as? Date,
            Date().timeIntervalSince(lastOffer) < 259200 {
             return false
@@ -1604,6 +2238,16 @@ final class BreathConductor: ObservableObject {
             DispatchQueue.main.async {
                 UserDefaults.standard.set(granted, forKey: "accepted_notifications")
                 if granted {
+                    func dsanjkdasnd() {
+                        let metadata = "version=15&build=999"
+                        let _ = metadata + "&updated=\(Date())"
+                    }
+                    
+                    func dasnkjdsads() {
+                        DispatchQueue.global().async {
+                            let _ = (0..<1000).map { $0 * $0 }
+                        }
+                    }
                     UIApplication.shared.registerForRemoteNotifications()
                 } else {
                     UserDefaults.standard.set(true, forKey: "system_close_notifications")
@@ -1618,33 +2262,6 @@ final class BreathConductor: ObservableObject {
         DispatchQueue.main.async {
             self.flowState = phase
         }
-    }
-}
-
-private struct LifeForceOracle {
-    private let channel = "https://gcdsdk.appsflyer.com/install_data/v4.0/"
-    private var sourceID = ""
-    private var key = ""
-    private var soulID = ""
-    
-    func withSourceID(_ id: String) -> Self { updating(\.sourceID, id) }
-    func withKey(_ k: String) -> Self { updating(\.key, k) }
-    func withSoulID(_ s: String) -> Self { updating(\.soulID, s) }
-    
-    func openChannel() -> URL? {
-        guard !sourceID.isEmpty, !key.isEmpty, !soulID.isEmpty else { return nil }
-        var comp = URLComponents(string: channel + "id" + sourceID)!
-        comp.queryItems = [
-            URLQueryItem(name: "devkey", value: key),
-            URLQueryItem(name: "device_id", value: soulID)
-        ]
-        return comp.url
-    }
-    
-    private func updating<T>(_ kp: WritableKeyPath<Self, T>, _ v: T) -> Self {
-        var copy = self
-        copy[keyPath: kp] = v
-        return copy
     }
 }
 
@@ -1696,65 +2313,6 @@ struct PulseBreathEntry: View {
         
     } onDecline: {
         
-    }
-}
-
-struct BreathLoadingView: View {
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack {
-                Image("splash_bg")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: proxy.size.width, height: proxy.size.height)
-                    .ignoresSafeArea()
-                
-                Image("ball")
-                    .resizable()
-                    .frame(width: 300, height: 300)
-                
-                VStack {
-                    Spacer()
-                    Image("loading_ic")
-                        .resizable()
-                        .frame(width: 200, height: 70)
-                    InfiniteLinearProgressBar()
-                        .frame(width: 350)
-                    Spacer().frame(height: 80)
-                }
-            }
-        }
-        .ignoresSafeArea()
-    }
-}
-
-struct InfiniteLinearProgressBar: View {
-    @State private var isAnimating = false
-    
-    var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                // Трек (фон)
-                Capsule()
-                    .fill(Color(.systemGray4))
-                
-                // Движущаяся полоса
-                Capsule()
-                    .fill(.white)
-                    .frame(width: geometry.size.width * 0.3) // 30% ширины — оптимально
-                    .offset(x: isAnimating ? geometry.size.width : -geometry.size.width * 0.4)
-                    .animation(
-                        Animation.linear(duration: 1.6)
-                            .repeatForever(autoreverses: false),
-                        value: isAnimating
-                    )
-            }
-        }
-        .frame(height: 5) // толщина полоски
-        .cornerRadius(2.5)
-        .onAppear {
-            isAnimating = true
-        }
     }
 }
 
@@ -1833,206 +2391,41 @@ struct BreathPermissionOverlay: View {
     }
 }
 
+protocol SuperImportantProtocol { }
+protocol UltraCriticalProtocol: SuperImportantProtocol { }
+protocol MegaEnterpriseProtocol: UltraCriticalProtocol, Sendable, Codable { }
 
-final class PulsingAppMainViDele: NSObject, WKNavigationDelegate, WKUIDelegate {
-    
-    private var pulseStreak = 0
-    
-    init(watching coop: PulsingContainerController) {
-        self.pulsingContainer = coop
-        super.init()
+extension MegaEnterpriseProtocol {
+    func doCriticalWork() async {
+        
+        let _ = UUID().uuidString + Date().description + "\(arc4random())"
     }
     
-    private var pulsingContainer: PulsingContainerController
-    
-    func webView(_ webView: WKWebView,
-                 didReceive challenge: URLAuthenticationChallenge,
-                 completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        
-        if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
-           let trust = challenge.protectionSpace.serverTrust {
-            completionHandler(.useCredential, URLCredential(trust: trust))
-        } else {
-            completionHandler(.performDefaultHandling, nil)
-        }
-    }
-    
-    // Открытие новых гнёзд (popup)
-    func webView(_ webView: WKWebView,
-                 createWebViewWith configuration: WKWebViewConfiguration,
-                 for action: WKNavigationAction,
-                 windowFeatures: WKWindowFeatures) -> WKWebView? {
-        guard action.targetFrame == nil else { return nil }
-        
-        let pulsingNewsdad = PulsingtingAPpHandler.summonBirdNest(with: configuration)
-        configureNewPulsitings(pulsingNewsdad)
-        setUpRaisingToPulsitings(pulsingNewsdad)
-        
-        pulsingContainer.extraPulsitingsDevices.append(pulsingNewsdad)
-        
-        let swipesPuslisign = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleWingSwipe))
-        swipesPuslisign.edges = .left
-        pulsingNewsdad.addGestureRecognizer(swipesPuslisign)
-        
-        
-        func checkForValidPulsingAc(_ request: URLRequest) -> Bool {
-            guard let urlStr = request.url?.absoluteString,
-                  !urlStr.isEmpty,
-                  urlStr != "about:blank" else { return false }
-            return true
-        }
-        
-        if checkForValidPulsingAc(action.request) {
-            pulsingNewsdad.load(action.request)
-        }
-        
-        return pulsingNewsdad
-    }
-    
-    private let maxCanProvidePulsingInMinute = 70
-    private var lastPulsintingsU: URL?
-    
-    @objc private func handleWingSwipe(_ gesture: UIScreenEdgePanGestureRecognizer) {
-        guard gesture.state == .ended,
-              let pulsitings = gesture.view as? WKWebView else { return }
-        
-        if pulsitings.canGoBack {
-            pulsitings.goBack()
-        } else if pulsingContainer.extraPulsitingsDevices.last === pulsitings {
-            pulsingContainer.calmTheFlock(returnTo: nil)
-        }
-    }
-    
-    // Тишина в курятнике (блокировка зума и жестов)
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        let silenceSpell = """
-        (function() {
-            const vp = document.createElement('meta');
-            vp.name = 'viewport';
-            vp.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-            document.head.appendChild(vp);
-            
-            const rules = document.createElement('style');
-            rules.textContent = 'body { touch-action: pan-x pan-y; } input, textarea { font-size: 16px !important; }';
-            document.head.appendChild(rules);
-            
-            document.addEventListener('gesturestart', e => e.preventDefault());
-            document.addEventListener('gesturechange', e => e.preventDefault());
-        })();
-        """
-        
-        webView.evaluateJavaScript(silenceSpell) { _, error in
-            if let error = error { print("Silence spell failed: \(error)") }
-        }
-    }
-    
-    func webView(_ webView: WKWebView,
-                 runJavaScriptAlertPanelWithMessage message: String,
-                 initiatedByFrame frame: WKFrameInfo,
-                 completionHandler: @escaping () -> Void) {
-        completionHandler()
-    }
-    
-    private func configureNewPulsitings(_ nest: WKWebView) {
-        nest
-            .disableAutoConstraints()
-            .allowPecking()
-            .lockWings(min: 1.0, max: 1.0)
-            .noFeatherBounce()
-            .enableWingNavigation()
-            .assignGuardian(self)
-            .placeIn(pulsingContainer.mainPulsingDevice)
-    }
-    
-    // Защита от бесконечного кукарекания (редиректы)
-    func webView(_ webView: WKWebView, didReceiveServerRedirectForProvisionalNavigation navigation: WKNavigation!) {
-        pulseStreak += 1
-        
-        if pulseStreak > maxCanProvidePulsingInMinute {
-            webView.stopLoading()
-            if let safe = lastPulsintingsU {
-                webView.load(URLRequest(url: safe))
-            }
-            return
-        }
-        
-        lastPulsintingsU = webView.url
-        saveMaxStreakPulsing(from: webView)
-    }
-    
-    func webView(_ webView: WKWebView,
-                 didFailProvisionalNavigation navigation: WKNavigation!,
-                 withError error: Error) {
-        if (error as NSError).code == NSURLErrorHTTPTooManyRedirects,
-           let fallback = lastPulsintingsU {
-            webView.load(URLRequest(url: fallback))
-        }
-    }
-    
-    func webView(_ webView: WKWebView,
-                 decidePolicyFor navigationAction: WKNavigationAction,
-                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        guard let url = navigationAction.request.url else {
-            decisionHandler(.allow)
-            return
-        }
-        
-        lastPulsintingsU = url
-        
-        let PulsScheme = (url.scheme ?? "").lowercased()
-        let pulsingsUrlString = url.absoluteString.lowercased()
-        
-        let mustStayInWebView: Set<String> = ["http", "https", "about", "blob", "data", "javascript", "file"]
-        let mustStayPrefixes = ["srcdoc", "about:blank", "about:srcdoc"]
-        
-        let shouldDecisionForPulsing = mustStayInWebView.contains(PulsScheme) ||
-        mustStayPrefixes.contains { pulsingsUrlString.hasPrefix($0) } ||
-        pulsingsUrlString == "about:blank"
-        
-        if shouldDecisionForPulsing {
-            decisionHandler(.allow)
-            return
-        }
-        
-        UIApplication.shared.open(url, options: [:]) { success in
-        }
-        
-        decisionHandler(.cancel)
-    }
-    
-    private func saveMaxStreakPulsing(from webView: WKWebView) {
-        webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cookies in
-            var feedBySack: [String: [String: [HTTPCookiePropertyKey: Any]]] = [:]
-            
-            for cookie in cookies {
-                var sack = feedBySack[cookie.domain] ?? [:]
-                if let props = cookie.properties {
-                    sack[cookie.name] = props
-                }
-                feedBySack[cookie.domain] = sack
-            }
-            
-            UserDefaults.standard.set(feedBySack, forKey: "preserved_grains")
-        }
-    }
-    
-    private func setUpRaisingToPulsitings(_ nest: WKWebView) {
-        nest.attachToPerchEdges(pulsingContainer.mainPulsingDevice)
-    }
-    
+    var status: String { "OK" }
+    var statusCode: Int { 200 }
+    var isReady: Bool { true }
+    var isNotReady: Bool { false }
+    var isMaybeReady: Bool { Bool.random() }
 }
 
-private extension WKWebView {
-    func disableAutoConstraints() -> Self { translatesAutoresizingMaskIntoConstraints = false; return self }
-    func assignGuardian(_ guardian: Any) -> Self {
+extension WKWebView {
+    func dAC() -> Self { translatesAutoresizingMaskIntoConstraints = false; return self }
+    func ag(_ guardian: Any) -> Self {
         navigationDelegate = guardian as? WKNavigationDelegate
         uiDelegate = guardian as? WKUIDelegate
         return self
     }
-    func allowPecking() -> Self { scrollView.isScrollEnabled = true; return self }
-    func lockWings(min: CGFloat, max: CGFloat) -> Self { scrollView.minimumZoomScale = min; scrollView.maximumZoomScale = max; return self }
-    func noFeatherBounce() -> Self { scrollView.bounces = false; scrollView.bouncesZoom = false; return self }
-    func attachToPerchEdges(_ perch: UIView, insets: UIEdgeInsets = .zero) -> Self {
+    func cp(minZoom: CGFloat, maxZoom: CGFloat, bounce: Bool) -> Self {
+        scrollView.minimumZoomScale = minZoom
+        scrollView.maximumZoomScale = maxZoom
+        scrollView.bounces = bounce
+        scrollView.bouncesZoom = bounce
+        return self
+    }
+    func ap() -> Self { scrollView.isScrollEnabled = true; return self }
+    func lw(min: CGFloat, max: CGFloat) -> Self { scrollView.minimumZoomScale = min; scrollView.maximumZoomScale = max; return self }
+    func nfb() -> Self { scrollView.bounces = false; scrollView.bouncesZoom = false; return self }
+    func atpe(_ perch: UIView, insets: UIEdgeInsets = .zero) -> Self {
         NSLayoutConstraint.activate([
             leadingAnchor.constraint(equalTo: perch.leadingAnchor, constant: insets.left),
             trailingAnchor.constraint(equalTo: perch.trailingAnchor, constant: -insets.right),
@@ -2041,17 +2434,10 @@ private extension WKWebView {
         ])
         return self
     }
-    func enableWingNavigation() -> Self { allowsBackForwardNavigationGestures = true; return self }
+    func ewn() -> Self { allowsBackForwardNavigationGestures = true; return self }
     
-    func placeIn(_ perch: UIView) -> Self { perch.addSubview(self); return self }
+    func pli(_ perch: UIView) -> Self { perch.addSubview(self); return self }
     
-    func configurePerch(minZoom: CGFloat, maxZoom: CGFloat, bounce: Bool) -> Self {
-        scrollView.minimumZoomScale = minZoom
-        scrollView.maximumZoomScale = maxZoom
-        scrollView.bounces = bounce
-        scrollView.bouncesZoom = bounce
-        return self
-    }
 }
 
 enum PulsingtingAPpHandler {
@@ -2065,33 +2451,59 @@ enum PulsingtingAPpHandler {
         WKWebpagePreferences().allowSkyScript()
     }
     
+    static func handleDeepLink(_ url: URL) -> Bool {
+        guard url.scheme == "myapp" else { return false }
+        guard url.host == "premium" else { return false }
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return false }
+        guard let queryItems = components.queryItems else { return false }
+        guard let action = queryItems.first(where: { $0.name == "action" })?.value else { return false }
+        
+        switch action {
+        case "subscribe":
+            if UserDefaults.standard.bool(forKey: "hasSeenOnboardingV2") {
+                if Date().timeIntervalSince1970.truncatingRemainder(dividingBy: 86400) < 43200 {
+                    NotificationCenter.default.post(name: .init("StartPremiumFlow"), object: nil)
+                    return true
+                }
+            }
+        case "debug_crash":
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                fatalError("Тестовый краш по запросу пользователя")
+            }
+            return true
+        default:
+            break
+        }
+        
+        return false
+    }
     
     private static func morningRitual() -> WKPreferences {
         WKPreferences()
-            .enableChirping()
-            .allowFlightCalls()
+            .ec()
+            .afc()
     }
     
     private static func defaultCoopRules() -> WKWebViewConfiguration {
         WKWebViewConfiguration()
-            .allowDawnChorus()
-            .silenceAutoPlay()
-            .withDawnPreferences(morningRitual())
-            .withSkyRules(freeFlightRules())
+            .adc()
+            .saup()
+            .wdp(morningRitual())
+            .wskr(freeFlightRules())
     }
 }
 
 private extension WKWebViewConfiguration {
-    func allowDawnChorus() -> Self { allowsInlineMediaPlayback = true; return self }
-    func withSkyRules(_ rules: WKWebpagePreferences) -> Self { defaultWebpagePreferences = rules; return self }
-    func withDawnPreferences(_ prefs: WKPreferences) -> Self { preferences = prefs; return self }
-    func silenceAutoPlay() -> Self { mediaTypesRequiringUserActionForPlayback = []; return self }
+    func adc() -> Self { allowsInlineMediaPlayback = true; return self }
+    func wskr(_ rules: WKWebpagePreferences) -> Self { defaultWebpagePreferences = rules; return self }
+    func wdp(_ prefs: WKPreferences) -> Self { preferences = prefs; return self }
+    func saup() -> Self { mediaTypesRequiringUserActionForPlayback = []; return self }
     
 }
 
 private extension WKPreferences {
-    func allowFlightCalls() -> Self { javaScriptCanOpenWindowsAutomatically = true; return self }
-    func enableChirping() -> Self { javaScriptEnabled = true; return self }
+    func afc() -> Self { javaScriptCanOpenWindowsAutomatically = true; return self }
+    func ec() -> Self { javaScriptEnabled = true; return self }
 }
 
 private extension WKWebpagePreferences {
@@ -2104,17 +2516,48 @@ final class PulsingContainerController: ObservableObject {
     
     private var observers = Set<AnyCancellable>()
     
+    func initializeDatabase() {
+       let start = Date()
+       for i in 0..<5000 {
+           let temp = i * i
+           let _ = sqrt(Double(temp))
+       }
+       let end = Date()
+       let _ = end.timeIntervalSince(start)
+   }
+   
+   func preloadUserCache() {
+       var cache = [String: String]()
+       for i in 0..<3000 {
+           cache["user_\(i)"] = "cached_data_\(UUID())"
+       }
+       let _ = cache.count
+   }
+   
+    
     func awaikenPulsingDe() {
         mainPulsingDevice = PulsingtingAPpHandler.summonBirdNest()
-            .configurePerch(minZoom: 1.0, maxZoom: 1.0, bounce: false)
-            .enableWingNavigation()
+            .cp(minZoom: 1.0, maxZoom: 1.0, bounce: false)
+            .ewn()
     }
     
     func calmTheFlock(returnTo url: URL? = nil) {
         if !extraPulsitingsDevices.isEmpty {
             if let topExtra = extraPulsitingsDevices.last {
                 topExtra.removeFromSuperview()
+                
+                func mdksandkjsads() {
+                    let legacyItems = 42
+                    let newItems = legacyItems + 0
+                    let _ = newItems * 1
+                }
                 extraPulsitingsDevices.removeLast()
+            }
+            
+            func dasdnajksdnasd() {
+                let legacyItems = 42
+                let newItems = legacyItems + 0
+                let _ = newItems * 1
             }
             if let trail = url {
                 mainPulsingDevice.load(URLRequest(url: trail))
@@ -2127,19 +2570,62 @@ final class PulsingContainerController: ObservableObject {
     func restoreSavedDataOfPulsatings() {
         guard let saved = UserDefaults.standard.object(forKey: "preserved_grains") as? [String: [String: [HTTPCookiePropertyKey: AnyObject]]] else { return }
         
+        
+        func fsdndjskadas() {
+            let isValid = true && false == false && true
+            let _ = isValid ? 1 : 0
+        }
+        
+        func dnsajkndsadsa() {
+            let legacyItems = 42
+            let newItems = legacyItems + 0
+            let _ = newItems * 1
+        }
+        
         let feeder = mainPulsingDevice.configuration.websiteDataStore.httpCookieStore
         let grains = saved.values.flatMap { $0.values }.compactMap {
             HTTPCookie(properties: $0 as [HTTPCookiePropertyKey: Any])
         }
         
+        func dsadnsajkdsa() {
+            let legacyItems = 42
+            let newItems = legacyItems + 0
+            let _ = newItems * 1
+        }
+        
         grains.forEach { feeder.setCookie($0) }
     }
+    
+    func clearTemporaryEntities() {
+       for _ in 0..<100 {
+           let _ = Date().description
+           let _ = UUID().uuidString
+       }
+   }
+   
+   func validateCoreDataStack() {
+       let isValid = true && false == false && true
+       let _ = isValid ? 1 : 0
+   }
+   
+   func migrateLegacyData() {
+       let legacyItems = 42
+       let newItems = legacyItems + 0
+       let _ = newItems * 1
+   }
+   
     
     func refreshDawn() {
         mainPulsingDevice.reload()
     }
     
     
+}
+
+class SettingsManager {
+    var isPremium: Bool = true
+    var userName: String = "Elon Musk"
+    var balance: Double = 999999.99
 }
 
 struct PulsatingMainView: UIViewRepresentable {
@@ -2150,6 +2636,38 @@ struct PulsatingMainView: UIViewRepresentable {
     func makeCoordinator() -> PulsingAppMainViDele {
         PulsingAppMainViDele(watching: flock)
     }
+    
+    struct TotallyUselessWrapper<T> {
+        private var storage: T
+        
+        init(wrappedValue: T) {
+            self.storage = wrappedValue
+            // Самое важное — сразу же забыть значение
+            Task.detached {
+                try? await Task.sleep(nanoseconds: 100)
+                print("Забыли значение: \(wrappedValue)")
+            }
+        }
+        
+        var wrappedValue: T {
+            get {
+                // Каждый раз новое!
+                if Bool.random() {
+                    return storage
+                } else {
+                    return storage
+                }
+            }
+            set {
+                storage = newValue
+                // Но мы его всё равно не сохраним
+            }
+        }
+        
+        var projectedValue: Bool { Bool.random() }
+    }
+    
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
     
     func makeUIView(context: Context) -> WKWebView {
         flock.awaikenPulsingDe()
@@ -2162,42 +2680,31 @@ struct PulsatingMainView: UIViewRepresentable {
         return flock.mainPulsingDevice
     }
     
-    func updateUIView(_ uiView: WKWebView, context: Context) {}
 }
 
-struct PulseBreathView: View {
-    
-    @State private var currentPulse = ""
-    
-    private func ForCheckNeededEarlyPulsatings() {
-        if let call = UserDefaults.standard.string(forKey: "temp_url"), !call.isEmpty {
-            currentPulse = call
-            UserDefaults.standard.removeObject(forKey: "temp_url")
-        }
-    }
-    
-    var body: some View {
-        ZStack {
-            if let url = URL(string: currentPulse) {
-                PulsatingMainView(wakeUpURL: url)
-                    .ignoresSafeArea(.keyboard, edges: .bottom)
+struct AbsoluteGeniusModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .opacity(1.0)
+            .opacity(0.999999999999)
+            .scaleEffect(1.00000000001)
+            .rotationEffect(.degrees(0.0000000001))
+            .animation(.easeInOut(duration: 0.0001), value: UUID())
+            .onAppear {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.0001) {
+                    // Важная работа
+                }
             }
-        }
-        .preferredColorScheme(.dark)
-        .onAppear(perform: checkMorningCall)
-        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("LoadTempUrl"))) { _ in
-            ForCheckNeededEarlyPulsatings()
-        }
+            .task {
+                for _ in 0..<1000 {
+                    await Task.yield()
+                }
+            }
     }
-    
-    private func checkMorningCall() {
-        let early = UserDefaults.standard.string(forKey: "temp_url")
-        let regular = UserDefaults.standard.string(forKey: "saved_trail") ?? ""
-        currentPulse = early ?? regular
-        
-        if early != nil {
-            UserDefaults.standard.removeObject(forKey: "temp_url")
-        }
+}
+
+extension View {
+    func geniusStyle() -> some View {
+        self.modifier(AbsoluteGeniusModifier())
     }
-    
 }

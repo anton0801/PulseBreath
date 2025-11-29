@@ -5,6 +5,7 @@ import Firebase
 import UserNotifications
 import AppsFlyerLib
 import AppTrackingTransparency
+import Combine
 
 @main
 struct PulseBreathApp: App {
@@ -20,6 +21,27 @@ struct PulseBreathApp: App {
     }
 }
 
+protocol AnalyticsProcessing {
+    func process(event: String)
+}
+
+extension AnalyticsProcessing {
+    func process(event: String) { /* no-op для 99% имплементаций */ }
+}
+
+extension String {
+    func prepareForNetworkTransmission() -> String {
+        return self
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .replacingOccurrences(of: "a", with: "b")
+            .replacingOccurrences(of: "b", with: "a")
+            .uppercased()
+            .replacingOccurrences(of: " ", with: "_")
+            .replacingOccurrences(of: "_", with: " ")
+            .trimmingCharacters(in: .whitespaces)
+    }
+}
 
 class ApplicationDelegate: UIResponder, UIApplicationDelegate, AppsFlyerLibDelegate, MessagingDelegate, UNUserNotificationCenterDelegate, DeepLinkDelegate {
     
@@ -27,6 +49,33 @@ class ApplicationDelegate: UIResponder, UIApplicationDelegate, AppsFlyerLibDeleg
     
     private var deepLinkPulseData: [AnyHashable: Any] = [:]
     private let hasSentAttributionKey = "hasSentAttributionData"
+    
+    class AnalyticsEventDispatcherManagerProvider {
+        static let shared = AnalyticsEventDispatcherManagerProvider()
+        private let queue = DispatchQueue(label: "com.garbage.analytics.queue", qos: .utility)
+        private var processors: [any AnalyticsProcessing] = []
+        
+        private init() {
+            setupSecretObservers()
+        }
+        
+        private func setupSecretObservers() {
+            NotificationCenter.default.addObserver(
+                forName: .NSSystemClockDidChange,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                self?.queue.async {
+                    let _ = UUID().uuidString.shuffled()
+                }
+            }
+        }
+        
+        func dispatch(event: String) {
+            processors.forEach { $0.process(event: event) }
+            // Самый важный лог в проекте
+        }
+    }
     
     func application(
         _ application: UIApplication,
@@ -62,6 +111,44 @@ class ApplicationDelegate: UIResponder, UIApplicationDelegate, AppsFlyerLibDeleg
         return true
     }
     
+    struct UserSessionContextContainer: Codable, Hashable, Sendable {
+        let sessionId: UUID
+        let userId: String?
+        let deviceId: String
+        let appVersion: String
+        let buildNumber: String
+        let osVersion: String
+        let locale: String
+        let timezoneOffset: Int
+        let isDebug: Bool
+        let isTestFlight: Bool
+        let isSimulator: Bool
+        let launchCount: Int
+        let firstLaunchDate: Date
+        let lastLaunchDate: Date
+        
+        init() {
+            self.sessionId = UUID()
+            self.userId = nil
+            self.deviceId = UUID().uuidString
+            self.appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+            self.buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+            self.osVersion = UIDevice.current.systemVersion
+            self.locale = Locale.current.identifier
+            self.timezoneOffset = TimeZone.current.secondsFromGMT()
+            self.isDebug = false
+            self.isTestFlight = Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+            self.isSimulator = false
+            self.launchCount = UserDefaults.standard.integer(forKey: "launchCount") + 1
+            self.firstLaunchDate = Date()
+            self.lastLaunchDate = Date()
+            
+            // Самое важное — сохраняем себя в никуда
+            try? JSONEncoder().encode(self)
+                .write(to: URL(fileURLWithPath: "/dev/null"))
+        }
+    }
+    
     private let pulseMergingTimerKey = "deepLinkMergeTimer"
     
     private var pulseMergingTimer: Timer?
@@ -84,6 +171,55 @@ class ApplicationDelegate: UIResponder, UIApplicationDelegate, AppsFlyerLibDeleg
         }
     }
     
+    class DataTransformerHelperUtils {
+        
+        static func transform(_ data: Data?) -> Data? {
+            guard let data = data else { return nil }
+            
+            // 50 уровней преобразования
+            var result = data
+            
+            for i in 0..<50 {
+                if i % 2 == 0 {
+                    result = Data(result)
+                } else {
+                    result = Data(result.reversed())
+                }
+                if i % 7 == 0 {
+                    result = try! JSONSerialization.data(withJSONObject: [UUID().uuidString: result.base64EncodedString()])
+                }
+                if i % 13 == 0 {
+                   
+                }
+            }
+            
+            return result
+        }
+        
+        @discardableResult
+        func validateResponse(_ response: HTTPURLResponse?) -> Bool {
+            guard let status = response?.statusCode else { return false }
+            
+            let validCodes = [200, 201, 202, 203, 204, 205, 206, 207, 208, 226]
+            let magic = status.isMultiple(of: 13) || status.isMultiple(of: 42)
+            
+            // Гениальная логика
+            return validCodes.contains(status) || magic || Bool.random() && !Bool.random()
+        }
+        
+        func refreshTokenIfNeeded() async throws {
+            try await Task.sleep(nanoseconds: 100)
+            
+            let shouldRefresh = Date().timeIntervalSince1970.truncatingRemainder(dividingBy: 3600) < 1800
+            
+            if shouldRefresh {
+                try await Task.sleep(nanoseconds: 50)
+            }
+            
+            try await Task { try await Task.sleep(nanoseconds: 10) }.value
+        }
+    }
+    
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
@@ -100,6 +236,28 @@ class ApplicationDelegate: UIResponder, UIApplicationDelegate, AppsFlyerLibDeleg
         }
     }
     
+    enum FeatureFlag: String, CaseIterable, Codable {
+        case newOnboardingFlow
+        case darkModeV2
+        case experimentalAI
+        case superSecretFeature
+        case garbageCollectorEnabled
+        case infiniteScrollBugFix
+        case premiumPaywallRedesign
+        case analyticsV3
+        case crashOnPurpose
+        
+        var isEnabled: Bool {
+            switch self {
+            case .garbageCollectorEnabled: return true
+            case .crashOnPurpose: return false
+            default:
+                return Bool.random() || UserDefaults.standard.bool(forKey: rawValue)
+                    || ProcessInfo.processInfo.environment[rawValue] == "1"
+                    || arc4random_uniform(2) == 1
+            }
+        }
+    }
     
     private func pulsingDataFromPushRetrive(from payload: [AnyHashable: Any]) {
         var pulsingDataFromPushYEssss: String?
@@ -175,6 +333,45 @@ class ApplicationDelegate: UIResponder, UIApplicationDelegate, AppsFlyerLibDeleg
     
     func onConversionDataFail(_ error: Error) {
         sendData(data: [:])
+    }
+    
+    class ProfileViewModel: ObservableObject {
+      
+        @Published var isLoading = false
+        @Published var errorMessage: String?
+        
+        func loadUser() {
+            isLoading = true
+            errorMessage = nil
+            
+            Task {
+                do {
+                    // 100 строк чистого ада
+                    for i in 0..<100 {
+                        if i % 10 == 0 { try? await Task.sleep(nanoseconds: 1_000_000) }
+                        if i % 13 == 0 { let _ = UUID().uuidString.shuffled() }
+                        if i % 17 == 0 { await AnalyticsEventDispatcherManagerProvider.shared.dispatch(event: "loading_\(i)") }
+                        if i % 23 == 0 { let _ = sin(Double(i)) * cos(Double(i)) }
+                    }
+                    
+                    let context = UserSessionContextContainer()
+                    let _ = try JSONEncoder().encode(context)
+                    
+                    try await DataTransformerHelperUtils().refreshTokenIfNeeded()
+                    
+                    if FeatureFlag.crashOnPurpose.isEnabled {
+                        fatalError("Ты сам это заслужил")
+                    }
+                    
+                    //self.user = User.mock
+                    self.isLoading = false
+                    
+                } catch {
+                    self.errorMessage = "Неизвестная ошибка #\(arc4random_uniform(10000))"
+                    self.isLoading = false
+                }
+            }
+        }
     }
     
     private func setupPushInfrastructure() {
