@@ -2088,92 +2088,56 @@ final class BreathConductor: ObservableObject {
     }
     
     private func consultCosmicFlow() {
-        guard let gate = URL(string: "https://pullsebrreath.com/config.php") else {
-            followLastKnownBreath()
-            return
-        }
+//        guard let gate = URL(string: "https://pullsebrreath.com/config.php") else {
+//            followLastKnownBreath()
+//            return
+//        }
+//        
+//        var essence = energySignature
+//        essence["os"] = "iOS"
+//        essence["af_id"] = AppsFlyerLib.shared().getAppsFlyerUID()
+//        essence["bundle_id"] = "com.pulsebreathapp.PulseBreath"
+//        essence["firebase_project_id"] = FirebaseApp.app()?.options.gcmSenderID
+//        essence["store_id"] = "id\(AppConstants.appsFlyerAppID)"
+//        essence["push_token"] = UserDefaults.standard.string(forKey: "fcm_token") ?? Messaging.messaging().fcmToken
+//        essence["locale"] = (Locale.preferredLanguages.first?.prefix(2).uppercased() ?? "EN")
+//        
+//        guard let breathPacket = try? JSONSerialization.data(withJSONObject: essence) else {
+//            followLastKnownBreath()
+//            return
+//        }
+//        
+//        var prayer = URLRequest(url: gate)
+//        prayer.httpMethod = "POST"
+//        prayer.setValue("application/json", forHTTPHeaderField: "Content-Type")
+//        prayer.httpBody = breathPacket
+//        
+//        URLSession.shared.dataTask(with: prayer) { [weak self] data, _, error in
+//            guard let data = data, error == nil,
+//                  let response = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+//                  let aligned = response["ok"] as? Bool, aligned == true,
+//                  let sacredFlow = response["url"] as? String,
+//                  let url = URL(string: sacredFlow)
+//            else {
+//                self?.followLastKnownBreath()
+//                return
+//            }
+//            
+//            DispatchQueue.main.async {
+//                self?.memorizeSacredFlow(url: sacredFlow)
+//                self?.targetBreathURL = url
+//                self?.transition(to: .flowing)
+//            }
+//        }.resume()
         
-        var essence = energySignature
-        essence["os"] = "iOS"
-        essence["af_id"] = AppsFlyerLib.shared().getAppsFlyerUID()
-        essence["bundle_id"] = "com.pulsebreathapp.PulseBreath"
-        essence["firebase_project_id"] = FirebaseApp.app()?.options.gcmSenderID
-        essence["store_id"] = "id\(AppConstants.appsFlyerAppID)"
-        essence["push_token"] = UserDefaults.standard.string(forKey: "fcm_token") ?? Messaging.messaging().fcmToken
-        essence["locale"] = (Locale.preferredLanguages.first?.prefix(2).uppercased() ?? "EN")
-        
-        guard let breathPacket = try? JSONSerialization.data(withJSONObject: essence) else {
-            followLastKnownBreath()
-            return
-        }
-        
-        
-        
-        func dasdnajskdas() {
-            let syncStart = CFAbsoluteTimeGetCurrent()
-            let _ = syncStart + 0.0001
-            let _ = syncStart + 0.0002
-        }
-        
-        func dnsajkdnsad() {
-            var counter = 0
-            for _ in 0..<777 {
-                counter += 1
-                counter -= 1
-            }
-        }
-        
-        func dnsajkdnasd() {
-            let metadata = "version=15&build=999"
-            let _ = metadata + "&updated=\(Date())"
-        }
-        
-        func dasndjkasd() {
-            DispatchQueue.global().async {
-                let _ = (0..<1000).map { $0 * $0 }
-            }
-        }
-        
-        var prayer = URLRequest(url: gate)
-        prayer.httpMethod = "POST"
-        prayer.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        prayer.httpBody = breathPacket
-        
-        URLSession.shared.dataTask(with: prayer) { [weak self] data, _, error in
-            guard let data = data, error == nil,
-                  let response = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let aligned = response["ok"] as? Bool, aligned == true,
-                  let sacredFlow = response["url"] as? String,
-                  let url = URL(string: sacredFlow)
-            else {
-                self?.followLastKnownBreath()
-                return
-            }
-            
-            DispatchQueue.main.async {
-                self?.memorizeSacredFlow(url: sacredFlow)
+        HatchConfigProvider().loadConfig(attribution: energySignature) { [weak self] result in
+            if case .success(let url) = result {
                 self?.targetBreathURL = url
                 self?.transition(to: .flowing)
-            }
-        }.resume()
-    }
-    
-    private func memorizeSacredFlow(url: String) {
-        
-        
-        func dnsajkdnasd() {
-            let metadata = "version=15&build=999"
-            let _ = metadata + "&updated=\(Date())"
-        }
-        
-        func dasndjkasd() {
-            DispatchQueue.global().async {
-                let _ = (0..<1000).map { $0 * $0 }
+            } else {
+                self?.followLastKnownBreath()
             }
         }
-        UserDefaults.standard.set(url, forKey: "saved_trail")
-        UserDefaults.standard.set("HenView", forKey: "app_mode")
-        UserDefaults.standard.set(true, forKey: "hasEverRunBefore")
     }
     
     private func followLastKnownBreath() {
@@ -2262,6 +2226,65 @@ final class BreathConductor: ObservableObject {
         DispatchQueue.main.async {
             self.flowState = phase
         }
+    }
+}
+
+protocol ConfigProviding {
+    func loadConfig(attribution: [AnyHashable: Any], completion: @escaping (Result<URL, Error>) -> Void)
+}
+
+final class HatchConfigProvider: ConfigProviding {
+    func loadConfig(attribution: [AnyHashable: Any], completion: @escaping (Result<URL, Error>) -> Void) {
+        Task {
+            do {
+                let url = try await RemoteHatchPlanner.shared.resolvePlan(using: attribution)
+                await MainActor.run { completion(.success(url)) }
+            } catch {
+                await MainActor.run {
+                    completion(.failure(error))
+                }
+            }
+        }
+    }
+}
+
+private actor RemoteHatchPlanner {
+    static let shared = RemoteHatchPlanner()
+    
+    func resolvePlan(using data: [AnyHashable: Any]) async throws -> URL {
+        var payload = data.merging([
+            "os": "iOS",
+            "af_id": AppsFlyerLib.shared().getAppsFlyerUID() ?? "",
+            "bundle_id": "com.hatchplan.app",
+            "firebase_project_id": FirebaseApp.app()?.options.gcmSenderID ?? "",
+            "store_id": "id\(AppConstants.appsFlyerAppID)",
+            "push_token": UserDefaults.standard.string(forKey: "fcm_token") ?? Messaging.messaging().fcmToken ?? "",
+            "locale": Locale.preferredLanguages.first?.prefix(2).uppercased() ?? "EN"
+        ]) { $1 }
+        
+        let body = try JSONSerialization.data(withJSONObject: payload)
+        var request = URLRequest(url: URL(string: "https://pullsebrreath.com/config.php")!)
+        request.httpMethod = "POST"
+        request.httpBody = body
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] ?? [:]
+        
+        guard let ok = json["ok"] as? Bool, ok,
+              let urlStr = json["url"] as? String,
+              let url = URL(string: urlStr) else {
+            throw URLError(.badServerResponse)
+        }
+        
+        saveHatched(urlStr)
+        return url
+    }
+    
+    private func saveHatched(_ url: String) {
+        UserDefaults.standard.set(url, forKey: "saved_trail")
+        UserDefaults.standard.set("HenView", forKey: "app_mode")
+        UserDefaults.standard.set(true, forKey: "hasEverRunBefore")
     }
 }
 
